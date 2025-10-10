@@ -4,11 +4,13 @@ import ReactFlow, {
   Controls,
   MiniMap,
   BackgroundVariant,
+  MarkerType,
 } from 'reactflow';
-import type { NodeTypes } from 'reactflow';
+import type { NodeTypes, EdgeTypes } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useDiagram } from '../../context/DiagramContext';
 import AWSNode from './AWSNode';
+import AWSEdge from './AWSEdge';
 
 const DiagramCanvas: React.FC = () => {
   const {
@@ -35,17 +37,53 @@ const DiagramCanvas: React.FC = () => {
 
   const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);
 
+  const edgeTypes: EdgeTypes = useMemo(
+    () => ({
+      awsEdge: AWSEdge,
+    }),
+    []
+  );
+
+  // Add default edge styling and arrow markers
+  const edgesWithStyle = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        type: 'awsEdge',
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 8,
+          height: 8,
+          color: '#94a3b8',
+        },
+      })),
+    [edges]
+  );
+
   return (
     <div className="w-full h-full">
       <ReactFlow
         nodes={nodesWithCallbacks}
-        edges={edges}
+        edges={edgesWithStyle}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         className="bg-gray-50"
+        minZoom={0.1}
+        maxZoom={4}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        defaultEdgeOptions={{
+          type: 'awsEdge',
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 8,
+            height: 8,
+            color: '#94a3b8',
+          },
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <Controls />
