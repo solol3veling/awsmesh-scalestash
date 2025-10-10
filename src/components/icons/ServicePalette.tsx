@@ -240,9 +240,11 @@ const ServicePalette: React.FC = () => {
                         return cleaned || service.name; // Fallback to original if empty
                       })()}
                     </div>
-                    <div className="text-xs text-gray-500 truncate w-full text-center">
-                      {service.category}
-                    </div>
+                    {service.category !== 'Other' && (
+                      <div className="text-xs text-gray-500 truncate w-full text-center">
+                        {service.category}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
