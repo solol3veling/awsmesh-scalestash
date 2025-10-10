@@ -1,0 +1,250 @@
+{
+  "version": "1.0",
+  "generatedAt": "2025-10-10T20:41:24.531Z",
+  "totalIcons": 30,
+  "categories": [
+    "Other"
+  ],
+  "services": [
+    {
+      "id": "auto-scaling-group-32",
+      "name": "Auto Scaling Group 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Auto-Scaling-group_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Auto-Scaling-group_32.svg",
+      "fileSize": 1686
+    },
+    {
+      "id": "auto-scaling-group-32",
+      "name": "Auto Scaling Group 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Auto-Scaling-group_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Auto-Scaling-group_32.png",
+      "fileSize": 1147
+    },
+    {
+      "id": "aws-account-32",
+      "name": "Aws Account 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Account_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Account_32.svg",
+      "fileSize": 1484
+    },
+    {
+      "id": "aws-account-32",
+      "name": "Aws Account 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Account_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Account_32.png",
+      "fileSize": 1444
+    },
+    {
+      "id": "aws-cloud-32",
+      "name": "Aws Cloud 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud_32.svg",
+      "fileSize": 1998
+    },
+    {
+      "id": "aws-cloud-32",
+      "name": "Aws Cloud 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud_32.png",
+      "fileSize": 1418
+    },
+    {
+      "id": "aws-cloud-32-dark",
+      "name": "Aws Cloud 32 Dark",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud_32_Dark.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud_32_Dark.svg",
+      "fileSize": 2003
+    },
+    {
+      "id": "aws-cloud-32-dark",
+      "name": "Aws Cloud 32 Dark",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud_32_Dark.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud_32_Dark.png",
+      "fileSize": 1283
+    },
+    {
+      "id": "aws-cloud-logo-32",
+      "name": "Aws Cloud Logo 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32.svg",
+      "fileSize": 6364
+    },
+    {
+      "id": "aws-cloud-logo-32",
+      "name": "Aws Cloud Logo 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32.png",
+      "fileSize": 2537
+    },
+    {
+      "id": "aws-cloud-logo-32-dark",
+      "name": "Aws Cloud Logo 32 Dark",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32_Dark.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32_Dark.svg",
+      "fileSize": 6369
+    },
+    {
+      "id": "aws-cloud-logo-32-dark",
+      "name": "Aws Cloud Logo 32 Dark",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32_Dark.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-Cloud-logo_32_Dark.png",
+      "fileSize": 2283
+    },
+    {
+      "id": "aws-iot-greengrass-deployment-32",
+      "name": "Aws Iot Greengrass Deployment 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-IoT-Greengrass-Deployment_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-IoT-Greengrass-Deployment_32.svg",
+      "fileSize": 3033
+    },
+    {
+      "id": "aws-iot-greengrass-deployment-32",
+      "name": "Aws Iot Greengrass Deployment 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/AWS-IoT-Greengrass-Deployment_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/AWS-IoT-Greengrass-Deployment_32.png",
+      "fileSize": 2226
+    },
+    {
+      "id": "corporate-data-center-32",
+      "name": "Corporate Data Center 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Corporate-data-center_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Corporate-data-center_32.svg",
+      "fileSize": 1322
+    },
+    {
+      "id": "corporate-data-center-32",
+      "name": "Corporate Data Center 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Corporate-data-center_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Corporate-data-center_32.png",
+      "fileSize": 804
+    },
+    {
+      "id": "ec2-instance-contents-32",
+      "name": "Ec2 Instance Contents 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/EC2-instance-contents_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/EC2-instance-contents_32.svg",
+      "fileSize": 1240
+    },
+    {
+      "id": "ec2-instance-contents-32",
+      "name": "Ec2 Instance Contents 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/EC2-instance-contents_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/EC2-instance-contents_32.png",
+      "fileSize": 1346
+    },
+    {
+      "id": "private-subnet-32",
+      "name": "Private Subnet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Private-subnet_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Private-subnet_32.svg",
+      "fileSize": 1454
+    },
+    {
+      "id": "private-subnet-32",
+      "name": "Private Subnet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Private-subnet_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Private-subnet_32.png",
+      "fileSize": 1305
+    },
+    {
+      "id": "public-subnet-32",
+      "name": "Public Subnet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Public-subnet_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Public-subnet_32.svg",
+      "fileSize": 1452
+    },
+    {
+      "id": "public-subnet-32",
+      "name": "Public Subnet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Public-subnet_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Public-subnet_32.png",
+      "fileSize": 1298
+    },
+    {
+      "id": "region-32",
+      "name": "Region 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Region_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Region_32.svg",
+      "fileSize": 1096
+    },
+    {
+      "id": "region-32",
+      "name": "Region 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Region_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Region_32.png",
+      "fileSize": 881
+    },
+    {
+      "id": "server-contents-32",
+      "name": "Server Contents 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Server-contents_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Server-contents_32.svg",
+      "fileSize": 707
+    },
+    {
+      "id": "server-contents-32",
+      "name": "Server Contents 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Server-contents_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Server-contents_32.png",
+      "fileSize": 553
+    },
+    {
+      "id": "spot-fleet-32",
+      "name": "Spot Fleet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Spot-Fleet_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Spot-Fleet_32.svg",
+      "fileSize": 2845
+    },
+    {
+      "id": "spot-fleet-32",
+      "name": "Spot Fleet 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Spot-Fleet_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Spot-Fleet_32.png",
+      "fileSize": 2848
+    },
+    {
+      "id": "virtual-private-cloud-vpc-32",
+      "name": "Virtual Private Cloud Vpc 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Virtual-private-cloud-VPC_32.svg",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Virtual-private-cloud-VPC_32.svg",
+      "fileSize": 3605
+    },
+    {
+      "id": "virtual-private-cloud-vpc-32",
+      "name": "Virtual Private Cloud Vpc 32",
+      "category": "Other",
+      "iconPath": "/aws-icons-optimized/Architecture-Group-Icons_07312025/Virtual-private-cloud-VPC_32.png",
+      "originalPath": "/aws-icons/Architecture-Group-Icons_07312025/Virtual-private-cloud-VPC_32.png",
+      "fileSize": 1980
+    }
+  ]
+}
