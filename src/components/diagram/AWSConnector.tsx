@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 
 interface AWSConnectorProps {
@@ -9,6 +9,8 @@ interface AWSConnectorProps {
 }
 
 const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisible }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   // Position connectors at different points along each edge
   // Extract the point number from id (e.g., "top-1" -> 1, "top-2" -> 2)
   const pointNumber = parseInt(id.split('-').pop() || '1');
@@ -36,16 +38,18 @@ const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisib
 
   return (
     <>
-      {/* Invisible React Flow Handle for functionality */}
+      {/* React Flow Handle with hover detection */}
       <Handle
         type={type}
         position={position}
         id={id}
-        className="!w-3 !h-3 !opacity-0 !bg-transparent !border-0"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="!w-4 !h-4 !opacity-0 !bg-transparent !border-0 !cursor-crosshair"
         style={getPositionStyle()}
       />
 
-      {/* Custom visible dot - always visible for now to test */}
+      {/* Custom visible dot with hover effect */}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -55,7 +59,17 @@ const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisib
           transition: 'opacity 150ms',
         }}
       >
-        <div className="w-2 h-2 rounded-full bg-blue-500 shadow-md border border-white" />
+        {/* Outer blue circle on hover */}
+        {isHovered && (
+          <div className="absolute inset-0 -m-2 rounded-full border-2 border-blue-500 bg-blue-500/10 animate-in zoom-in duration-150" />
+        )}
+
+        {/* Main dot - larger and more visible */}
+        <div
+          className={`w-2.5 h-2.5 rounded-full shadow-md border border-white transition-all duration-150 ${
+            isHovered ? 'bg-blue-600 scale-125' : 'bg-blue-500'
+          }`}
+        />
       </div>
     </>
   );
