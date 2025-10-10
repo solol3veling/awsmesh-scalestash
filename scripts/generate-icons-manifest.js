@@ -60,16 +60,24 @@ async function optimizeIcon(inputPath, outputPath) {
   return false;
 }
 
-function extractServiceName(filename) {
-  // Remove extension and clean up name
-  const name = path.basename(filename, path.extname(filename));
+function extractServiceInfo(filename) {
+  const basename = path.basename(filename, path.extname(filename));
+
+  // Extract size from filename (e.g., "_16", "_32", "_48", "_64")
+  const sizeMatch = basename.match(/_(\d+)$/);
+  const size = sizeMatch ? parseInt(sizeMatch[1]) : null;
+
+  // Remove size suffix from name
+  const nameWithoutSize = basename.replace(/_\d+$/, '');
 
   // Convert kebab-case or snake_case to Title Case
-  return name
+  const cleanName = nameWithoutSize
     .replace(/[-_]/g, ' ')
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+
+  return { name: cleanName, size };
 }
 
 async function scanAndOptimizeIcons() {
@@ -114,6 +122,7 @@ async function scanAndOptimizeIcons() {
     services: [],
   };
 
+  const serviceMap = new Map(); // Group icons by service name
   let optimizedCount = 0;
 
   for (const iconFile of iconFiles) {
@@ -132,7 +141,7 @@ async function scanAndOptimizeIcons() {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    const serviceName = extractServiceName(path.basename(iconFile));
+    const { name: serviceName, size } = extractServiceInfo(path.basename(iconFile));
 
     // Optimize icon
     const success = await optimizeIcon(inputPath, outputPath);
@@ -141,19 +150,37 @@ async function scanAndOptimizeIcons() {
       optimizedCount++;
       manifest.categories.add(category);
 
-      // Add to manifest
-      manifest.services.push({
-        id: path.basename(iconFile, path.extname(iconFile)).toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        name: serviceName,
-        category: category,
+      const iconInfo = {
+        size: size || 64, // Default to 64 if no size detected
         iconPath: `/aws-icons-optimized/${relativePath.replace(/\\/g, '/')}`,
         originalPath: `/aws-icons/${relativePath.replace(/\\/g, '/')}`,
         fileSize: fs.statSync(outputPath).size,
-      });
+        format: path.extname(iconFile).substring(1),
+      };
 
-      console.log(`✅ ${serviceName} (${category})`);
+      // Group icons by service name
+      const serviceKey = `${serviceName.toLowerCase()}-${category}`;
+      if (!serviceMap.has(serviceKey)) {
+        serviceMap.set(serviceKey, {
+          id: serviceName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: serviceName,
+          category: category,
+          sizes: {},
+        });
+      }
+
+      const service = serviceMap.get(serviceKey);
+      if (!service.sizes[iconInfo.size]) {
+        service.sizes[iconInfo.size] = [];
+      }
+      service.sizes[iconInfo.size].push(iconInfo);
+
+      console.log(`✅ ${serviceName} ${size}px (${category})`);
     }
   }
+
+  // Convert serviceMap to array and add to manifest
+  manifest.services = Array.from(serviceMap.values());
 
   // Convert Set to Array for JSON
   manifest.categories = Array.from(manifest.categories).sort();

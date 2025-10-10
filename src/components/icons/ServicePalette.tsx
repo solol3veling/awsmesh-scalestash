@@ -4,27 +4,97 @@ import { useIconsManifest } from '../../hooks/useIconsManifest';
 
 const ServicePalette: React.FC = () => {
   const { addNode } = useDiagram();
-  const { services, categories, loading, error, getServicesByCategory, searchServices } = useIconsManifest();
+  const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredServices = useMemo(() => {
+    let results;
+    // When searching, ONLY show search results (ignore category filter)
     if (searchQuery.trim()) {
-      return searchServices(searchQuery);
+      results = searchServices(searchQuery);
+    } else {
+      // When not searching, show category filtered results
+      results = getServicesByCategory(selectedCategory);
     }
-    return getServicesByCategory(selectedCategory);
+
+    // Filter to only show services that have 64px icons
+    // Remove duplicate services (e.g., exclude @5x, @4x variants)
+    const uniqueServices = new Map();
+    results.forEach(service => {
+      // Skip services that don't have 64px icons
+      if (!service.sizes[64]) return;
+
+      // Normalize the name to detect duplicates
+      // Remove common suffixes like "64@5x", "@5x", "@4x", etc.
+      const normalizedName = service.name
+        .replace(/\s+\d+@\d+x$/i, '') // Remove " 64@5x" style suffixes
+        .replace(/\s+@\d+x$/i, '')    // Remove " @5x" style suffixes
+        .trim();
+
+      // Use normalized name + category as the unique key
+      const uniqueKey = `${normalizedName}-${service.category}`;
+
+      // Keep the service with more size variants (prefer the complete one)
+      const existing = uniqueServices.get(uniqueKey);
+      if (!existing) {
+        uniqueServices.set(uniqueKey, service);
+      } else {
+        // If this service has more sizes, use it instead
+        const existingSizeCount = Object.keys(existing.sizes).length;
+        const currentSizeCount = Object.keys(service.sizes).length;
+        if (currentSizeCount > existingSizeCount) {
+          uniqueServices.set(uniqueKey, service);
+        }
+      }
+    });
+
+    return Array.from(uniqueServices.values());
   }, [selectedCategory, searchQuery, services]);
 
+  const getCategoryCount = (category: string) => {
+    // Count only services with 64px icons, excluding duplicates
+    const uniqueServices = new Map();
+    const servicesToCount = category === 'All' ? services : services.filter(s => s.category === category);
+
+    servicesToCount.forEach(service => {
+      if (!service.sizes[64]) return;
+
+      // Use same normalization as filteredServices
+      const normalizedName = service.name
+        .replace(/\s+\d+@\d+x$/i, '')
+        .replace(/\s+@\d+x$/i, '')
+        .trim();
+
+      const uniqueKey = `${normalizedName}-${service.category}`;
+
+      const existing = uniqueServices.get(uniqueKey);
+      if (!existing) {
+        uniqueServices.set(uniqueKey, service);
+      } else {
+        const existingSizeCount = Object.keys(existing.sizes).length;
+        const currentSizeCount = Object.keys(service.sizes).length;
+        if (currentSizeCount > existingSizeCount) {
+          uniqueServices.set(uniqueKey, service);
+        }
+      }
+    });
+
+    return uniqueServices.size;
+  };
+
   const handleDragStart = (event: React.DragEvent, service: any) => {
+    const largeIcon = getLargeIcon(service);
     event.dataTransfer.setData('application/reactflow', JSON.stringify({
       service: service.name,
       category: service.category,
-      iconPath: service.iconPath,
+      iconPath: largeIcon, // Use 32px+ for canvas
     }));
     event.dataTransfer.effectAllowed = 'move';
   };
 
   const handleAddService = (service: any) => {
+    const largeIcon = getLargeIcon(service);
     const newNode = {
       id: `${service.id}-${Date.now()}`,
       type: 'awsNode',
@@ -33,39 +103,63 @@ const ServicePalette: React.FC = () => {
         service: service.name,
         category: service.category,
         label: service.name,
-        iconUrl: service.iconPath,
+        iconUrl: largeIcon, // Use 32px+ for canvas
       },
     };
     addNode(newNode);
   };
 
   return (
-    <div className="w-80 h-full bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-bold text-gray-800 mb-3">AWS Services</h2>
-        <input
-          type="text"
-          placeholder="Search services..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+    <div className="w-80 min-w-80 max-w-80 h-full bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <h2 className="text-lg font-bold text-gray-800 mb-3 truncate">AWS Services</h2>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search (e.g., EC2, S3, Lambda)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <div className="mt-2 text-xs text-gray-500">
+            {filteredServices.length} result{filteredServices.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </div>
+        )}
       </div>
 
-      <div className="flex overflow-x-auto border-b border-gray-200 p-2 gap-1">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1 text-xs rounded whitespace-nowrap ${
-              selectedCategory === cat
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="flex overflow-x-auto border-b border-gray-200 p-2 gap-1 flex-shrink-0 scrollbar-thin">
+        {categories.map((cat) => {
+          const count = getCategoryCount(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => {
+                setSelectedCategory(cat);
+                setSearchQuery(''); // Clear search when changing category
+              }}
+              className={`px-3 py-1 text-xs rounded whitespace-nowrap flex-shrink-0 transition-colors ${
+                selectedCategory === cat
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {cat} <span className="ml-1 opacity-70">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -98,38 +192,52 @@ const ServicePalette: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {filteredServices.map((service) => (
-              <div
-                key={service.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, service)}
-                onClick={() => handleAddService(service)}
-                className="p-3 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md cursor-move transition-all"
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <img
-                    src={service.iconPath}
-                    alt={service.name}
-                    className="w-12 h-12 object-contain"
-                    onError={(e) => {
-                      // Fallback to placeholder if icon fails to load
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div className="w-12 h-12 bg-orange-500 rounded hidden items-center justify-center text-white font-bold text-sm">
-                    {service.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="text-xs text-center font-medium text-gray-700">
-                    {service.name}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {service.category}
+            {filteredServices.map((service) => {
+              const smallIcon = getSmallIcon(service); // Use 16px for sidebar
+              return (
+                <div
+                  key={`${service.id}-${service.category}`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, service)}
+                  onClick={() => handleAddService(service)}
+                  className="p-3 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md cursor-move transition-all"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    {smallIcon ? (
+                      <>
+                        <img
+                          src={smallIcon}
+                          alt={service.name}
+                          className="w-14 h-14 object-contain"
+                          onError={(e) => {
+                            // Fallback to placeholder if icon fails to load
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                        <div className="w-14 h-14 bg-orange-500 rounded hidden items-center justify-center text-white font-bold text-sm">
+                          {service.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-14 h-14 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-sm">
+                        {service.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="text-xs text-center font-medium text-gray-700 line-clamp-2 w-full px-1">
+                      {service.name
+                        .replace(/^(Arch|Res)\s+/i, '') // Remove "Arch " or "Res " prefix
+                        .replace(/\s+(Other)$/i, '')    // Remove " Other" suffix
+                        .trim()}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate w-full text-center">
+                      {service.category}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
