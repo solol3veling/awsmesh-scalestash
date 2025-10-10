@@ -37,31 +37,35 @@ const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisib
   };
 
   return (
-    <>
-      {/* React Flow Handle with hover detection */}
+    <div
+      className="absolute"
+      style={{
+        ...getPositionStyle(),
+        transform: 'translate(-50%, -50%)',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* React Flow Handle */}
       <Handle
         type={type}
         position={position}
         id={id}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="!w-4 !h-4 !opacity-0 !bg-transparent !border-0 !cursor-crosshair"
-        style={getPositionStyle()}
+        className="!w-5 !h-5 !opacity-0 !bg-transparent !border-0 !cursor-crosshair relative"
+        style={{ position: 'static', transform: 'none' }}
       />
 
       {/* Custom visible dot with hover effect */}
       <div
-        className="absolute pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
         style={{
-          ...getPositionStyle(),
-          transform: 'translate(-50%, -50%)',
           opacity: isVisible ? 1 : 0,
           transition: 'opacity 150ms',
         }}
       >
         {/* Outer blue circle on hover */}
         {isHovered && (
-          <div className="absolute inset-0 -m-2 rounded-full border-2 border-blue-500 bg-blue-500/10 animate-in zoom-in duration-150" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-blue-500 bg-blue-500/20" />
         )}
 
         {/* Main dot - larger and more visible */}
@@ -71,7 +75,7 @@ const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisib
           }`}
         />
       </div>
-    </>
+    </div>
   );
 };
 

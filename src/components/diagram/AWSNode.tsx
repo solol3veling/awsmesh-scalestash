@@ -26,7 +26,7 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
     }
   };
 
-  const showConnectors = isHovered || selected;
+  const showConnectors = isHovered || selected || data.isConnecting;
 
   return (
     <div

@@ -22,7 +22,9 @@ const DiagramCanvas: React.FC = () => {
     updateNodeLabel,
   } = useDiagram();
 
-  // Add onLabelChange callback to all nodes
+  const [connectionNodeId, setConnectionNodeId] = React.useState<string | null>(null);
+
+  // Add onLabelChange callback and connection state to all nodes
   const nodesWithCallbacks = useMemo(
     () =>
       nodes.map((node) => ({
@@ -30,9 +32,10 @@ const DiagramCanvas: React.FC = () => {
         data: {
           ...node.data,
           onLabelChange: updateNodeLabel,
+          isConnecting: connectionNodeId !== null,
         },
       })),
-    [nodes, updateNodeLabel]
+    [nodes, updateNodeLabel, connectionNodeId]
   );
 
   const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);
@@ -68,6 +71,8 @@ const DiagramCanvas: React.FC = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={(_, params) => setConnectionNodeId(params.nodeId || null)}
+        onConnectEnd={() => setConnectionNodeId(null)}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
