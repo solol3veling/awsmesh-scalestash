@@ -95,14 +95,20 @@ const ServicePalette: React.FC = () => {
 
   const handleAddService = (service: any) => {
     const largeIcon = getLargeIcon(service);
+    // Clean the service name for display
+    const cleanServiceName = service.name
+      .replace(/^(Arch|Res)\s+/i, '')
+      .replace(/\s+(Other)$/i, '')
+      .trim();
+
     const newNode = {
       id: `${service.id}-${Date.now()}`,
       type: 'awsNode',
       position: { x: Math.random() * 300, y: Math.random() * 300 },
       data: {
-        service: service.name,
+        service: cleanServiceName,
         category: service.category,
-        label: service.name,
+        label: cleanServiceName, // Default to service name
         iconUrl: largeIcon, // Use 32px+ for canvas
       },
     };
@@ -226,10 +232,13 @@ const ServicePalette: React.FC = () => {
                       </div>
                     )}
                     <div className="text-xs text-center font-medium text-gray-700 line-clamp-2 w-full px-1">
-                      {service.name
-                        .replace(/^(Arch|Res)\s+/i, '') // Remove "Arch " or "Res " prefix
-                        .replace(/\s+(Other)$/i, '')    // Remove " Other" suffix
-                        .trim()}
+                      {(() => {
+                        const cleaned = service.name
+                          .replace(/^(Arch|Res)\s+/i, '') // Remove "Arch " or "Res " prefix
+                          .replace(/\s+(Other)$/i, '')    // Remove " Other" suffix
+                          .trim();
+                        return cleaned || service.name; // Fallback to original if empty
+                      })()}
                     </div>
                     <div className="text-xs text-gray-500 truncate w-full text-center">
                       {service.category}

@@ -17,14 +17,28 @@ const DiagramCanvas: React.FC = () => {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    updateNodeLabel,
   } = useDiagram();
+
+  // Add onLabelChange callback to all nodes
+  const nodesWithCallbacks = useMemo(
+    () =>
+      nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onLabelChange: updateNodeLabel,
+        },
+      })),
+    [nodes, updateNodeLabel]
+  );
 
   const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);
 
   return (
     <div className="w-full h-full">
       <ReactFlow
-        nodes={nodes}
+        nodes={nodesWithCallbacks}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

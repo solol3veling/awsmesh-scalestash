@@ -57,5 +57,6 @@ export interface NodeData {
   category: AWSServiceCategory;
   label: string;
   iconUrl?: string;
+  onLabelChange?: (nodeId: string, label: string) => void;
   [key: string]: any;
 }

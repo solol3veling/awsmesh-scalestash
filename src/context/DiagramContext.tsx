@@ -15,6 +15,7 @@ interface DiagramContextType {
   onConnect: (connection: Connection) => void;
   addNode: (node: Node) => void;
   removeNode: (nodeId: string) => void;
+  updateNodeLabel: (nodeId: string, label: string) => void;
   updateDSL: () => void;
   loadFromDSL: (dsl: DiagramDSL) => void;
   exportDSL: () => DiagramDSL;
@@ -70,6 +71,16 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   const removeNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
     setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+  }, []);
+
+  const updateNodeLabel = useCallback((nodeId: string, label: string) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, label } }
+          : node
+      )
+    );
   }, []);
 
   // Convert React Flow nodes/edges to DSL JSON
@@ -148,6 +159,7 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         onConnect,
         addNode,
         removeNode,
+        updateNodeLabel,
         updateDSL,
         loadFromDSL,
         exportDSL,
