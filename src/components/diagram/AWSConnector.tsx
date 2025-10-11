@@ -16,66 +16,81 @@ const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisib
   const pointNumber = parseInt(id.split('-').pop() || '1');
 
   const getPositionStyle = () => {
-    // Calculate position based on point number (1, 2, 3)
-    // Divide edge into quarters: 25%, 50%, 75%
-    const positions = [25, 50, 75];
+    // Evenly distribute: 33%, 50%, 67% for uniform spacing
+    const positions = [33, 50, 67];
     const percent = positions[pointNumber - 1] || 50;
-    const gap = -4; // Negative to position OUTSIDE the box with breathing space
+    const gap = -5; // Just outside the box edge
 
     switch (position) {
       case Position.Top:
-        return { top: gap, left: `${percent}%` };
+        return { top: gap, left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Right:
-        return { right: gap, top: `${percent}%` };
+        return { right: gap, top: `${percent}%`, transform: 'translateY(-50%)' };
       case Position.Bottom:
-        return { bottom: gap, left: `${percent}%` };
+        return { bottom: gap, left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Left:
-        return { left: gap, top: `${percent}%` };
+        return { left: gap, top: `${percent}%`, transform: 'translateY(-50%)' };
       default:
         return {};
     }
   };
 
   return (
-    <div
-      className="absolute"
-      style={{
-        ...getPositionStyle(),
-        transform: 'translate(-50%, -50%)',
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* React Flow Handle */}
+    <>
+      {/* Source and Target handles - both functional */}
       <Handle
-        type={type}
+        type="source"
         position={position}
-        id={id}
-        className="!w-5 !h-5 !opacity-0 !bg-transparent !border-0 !cursor-crosshair relative"
-        style={{ position: 'static', transform: 'none' }}
+        id={`${id}-src`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="react-flow__handle"
+        style={{
+          ...getPositionStyle(),
+          width: 8,
+          height: 8,
+          border: '1px solid white',
+          background: isHovered ? '#3b82f6' : '#60a5fa',
+          opacity: isVisible ? 1 : 0,
+          transition: 'all 150ms',
+          cursor: 'crosshair',
+          zIndex: 10,
+        }}
       />
 
-      {/* Custom visible dot with hover effect */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+      <Handle
+        type="target"
+        position={position}
+        id={`${id}-tgt`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="react-flow__handle"
         style={{
+          ...getPositionStyle(),
+          width: 8,
+          height: 8,
+          border: '1px solid white',
+          background: isHovered ? '#3b82f6' : '#60a5fa',
           opacity: isVisible ? 1 : 0,
-          transition: 'opacity 150ms',
+          transition: 'all 150ms',
+          cursor: 'crosshair',
+          zIndex: 10,
         }}
-      >
-        {/* Outer blue circle on hover */}
-        {isHovered && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-blue-500 bg-blue-500/20" />
-        )}
+      />
 
-        {/* Main dot - larger and more visible */}
+      {/* Blue overlay on hover */}
+      {isVisible && isHovered && (
         <div
-          className={`w-2.5 h-2.5 rounded-full shadow-md border border-white transition-all duration-150 ${
-            isHovered ? 'bg-blue-600 scale-125' : 'bg-blue-500'
-          }`}
+          className="absolute rounded-full bg-blue-500 pointer-events-none"
+          style={{
+            ...getPositionStyle(),
+            width: 12,
+            height: 12,
+            zIndex: 9,
+          }}
         />
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
