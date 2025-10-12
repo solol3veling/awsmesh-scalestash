@@ -16,6 +16,7 @@ interface DiagramContextType {
   addNode: (node: Node) => void;
   removeNode: (nodeId: string) => void;
   updateNodeLabel: (nodeId: string, label: string) => void;
+  toggleNodeLock: (nodeId: string) => void;
   removeEdge: (edgeId: string) => void;
   updateEdgeLabel: (edgeId: string, label: string) => void;
   updateDSL: () => void;
@@ -52,8 +53,20 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   });
 
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
+    (changes: NodeChange[]) => {
+      // Prevent changes to locked nodes
+      const filteredChanges = changes.filter((change) => {
+        if (change.type === 'position' || change.type === 'remove') {
+          const node = nodes.find((n) => n.id === change.id);
+          if (node?.data?.locked) {
+            return false; // Block changes to locked nodes
+          }
+        }
+        return true;
+      });
+      setNodes((nds) => applyNodeChanges(filteredChanges, nds));
+    },
+    [nodes]
   );
 
   const onEdgesChange = useCallback(
@@ -95,6 +108,16 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
       nds.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, label } }
+          : node
+      )
+    );
+  }, []);
+
+  const toggleNodeLock = useCallback((nodeId: string) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, locked: !node.data.locked }, draggable: node.data.locked }
           : node
       )
     );
@@ -191,6 +214,7 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         addNode,
         removeNode,
         updateNodeLabel,
+        toggleNodeLock,
         removeEdge,
         updateEdgeLabel,
         updateDSL,

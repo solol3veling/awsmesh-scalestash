@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
 import type { NodeData } from '../../types/diagram';
+import { Lock, Unlock, Trash2 } from 'lucide-react';
 
 const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -51,6 +52,7 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
   const renderHandle = (position: Position, pointNumber: number, baseId: string) => {
     const handleId = `${baseId}-${pointNumber}`;
     const isHandleHovered = hoveredHandle === handleId;
+    const isNodeLocked = data.locked || false;
 
     const baseStyle = getPositionStyle(position, pointNumber);
 
@@ -64,7 +66,7 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
       background: isHandleHovered ? '#3b82f6' : '#60a5fa',
       opacity: showConnectors ? 1 : 0,
       transition: 'all 150ms',
-      cursor: 'crosshair',
+      cursor: isNodeLocked ? 'not-allowed' : 'crosshair',
       zIndex: 10,
     };
 
@@ -78,7 +80,7 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           onMouseEnter={() => setHoveredHandle(handleId)}
           onMouseLeave={() => setHoveredHandle(null)}
           style={handleStyle}
-          isConnectable={showConnectors}
+          isConnectable={showConnectors && !isNodeLocked}
         />
 
         {/* Blue overlay on hover */}
@@ -101,17 +103,66 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
     );
   };
 
+  const handleDelete = () => {
+    if (data.onDelete) {
+      data.onDelete(id);
+    }
+  };
+
+  const handleToggleLock = () => {
+    if (data.onToggleLock) {
+      data.onToggleLock(id);
+    }
+  };
+
+  const isLocked = data.locked || false;
+
   return (
     <div
-      className="flex flex-col items-center"
+      className="flex flex-col items-center relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Control toolbar - absolutely positioned above, outside the box */}
+      {isHovered && (
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-30">
+          <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 px-1.5 py-0.5">
+            <button
+              onClick={handleToggleLock}
+              className="group relative p-1 transition-opacity duration-150 hover:opacity-70"
+            >
+              {isLocked ? (
+                <Lock size={12} className="text-amber-500" strokeWidth={2.5} />
+              ) : (
+                <Unlock size={12} className="text-gray-500" strokeWidth={2.5} />
+              )}
+              {/* Tooltip */}
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-900 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                {isLocked ? 'Unlock' : 'Lock'}
+              </span>
+            </button>
+
+            <div className="w-px h-3 bg-gray-300 mx-0.5" />
+
+            <button
+              onClick={handleDelete}
+              className="group relative p-1 transition-opacity duration-150 hover:opacity-70"
+            >
+              <Trash2 size={12} className="text-red-500" strokeWidth={2.5} />
+              {/* Tooltip */}
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-900 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                Delete
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Icon container - THIS is the connection box */}
       <div
         className={`relative w-16 h-16 bg-white rounded-lg shadow-sm flex items-center justify-center transition-all ${
           selected ? 'ring-1 ring-blue-400 ring-offset-1' : ''
-        }`}
+        } ${isLocked ? 'ring-1 ring-yellow-400' : ''}`}
       >
         {/* Top edge - 3 connection points */}
         {renderHandle(Position.Top, 1, 'top')}

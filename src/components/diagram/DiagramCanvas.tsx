@@ -20,6 +20,8 @@ const DiagramCanvas: React.FC = () => {
     onEdgesChange,
     onConnect,
     updateNodeLabel,
+    toggleNodeLock,
+    removeNode,
     removeEdge,
     updateEdgeLabel,
   } = useDiagram();
@@ -31,13 +33,16 @@ const DiagramCanvas: React.FC = () => {
     () =>
       nodes.map((node) => ({
         ...node,
+        draggable: !node.data.locked, // Make locked nodes non-draggable
         data: {
           ...node.data,
           onLabelChange: updateNodeLabel,
+          onToggleLock: toggleNodeLock,
+          onDelete: removeNode,
           isConnecting: connectionNodeId !== null,
         },
       })),
-    [nodes, updateNodeLabel, connectionNodeId]
+    [nodes, updateNodeLabel, toggleNodeLock, removeNode, connectionNodeId]
   );
 
   const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);
