@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
   BackgroundVariant,
   MarkerType,
+  useReactFlow,
 } from 'reactflow';
 import type { NodeTypes, EdgeTypes } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -25,8 +26,11 @@ const DiagramCanvas: React.FC = () => {
     duplicateNode,
     removeEdge,
     updateEdgeLabel,
+    addNode,
   } = useDiagram();
 
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { screenToFlowPosition } = useReactFlow();
   const [connectionNodeId, setConnectionNodeId] = React.useState<string | null>(null);
 
   // Add onLabelChange callback and connection state to all nodes
@@ -82,8 +86,43 @@ const DiagramCanvas: React.FC = () => {
     [edges, removeEdge, updateEdgeLabel]
   );
 
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const data = event.dataTransfer.getData('application/reactflow');
+      if (!data) return;
+
+      const serviceData = JSON.parse(data);
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const newNode = {
+        id: `node-${Date.now()}`,
+        type: 'awsNode',
+        position,
+        data: {
+          service: serviceData.service,
+          category: serviceData.category,
+          label: serviceData.service,
+          iconUrl: serviceData.iconPath,
+        },
+      };
+
+      addNode(newNode);
+    },
+    [screenToFlowPosition, addNode]
+  );
+
   return (
-    <div className="w-full h-full">
+    <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow
         nodes={nodesWithCallbacks}
         edges={edgesWithStyle}
@@ -101,6 +140,8 @@ const DiagramCanvas: React.FC = () => {
           console.log('Connection ended:', event);
           setConnectionNodeId(null);
         }}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode="loose"

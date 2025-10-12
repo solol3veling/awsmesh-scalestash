@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ReactFlowProvider } from 'reactflow';
 import DiagramCanvas from '../components/diagram/DiagramCanvas';
 import ServicePalette from '../components/icons/ServicePalette';
 import CodeEditor from '../components/editor/CodeEditor';
@@ -27,7 +28,9 @@ const DiagramPage: React.FC = () => {
 
           <div className="flex-1 flex">
             <div className={showEditor ? 'w-1/2' : 'w-full'}>
-              <DiagramCanvas />
+              <ReactFlowProvider>
+                <DiagramCanvas />
+              </ReactFlowProvider>
             </div>
 
             {showEditor && (
