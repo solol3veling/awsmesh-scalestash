@@ -4,26 +4,27 @@ import DiagramCanvas from '../components/diagram/DiagramCanvas';
 import ServicePalette from '../components/icons/ServicePalette';
 import CodeEditor from '../components/editor/CodeEditor';
 import Toolbar from '../components/layout/Toolbar';
+import { Button } from '../components/ui/button';
 
 const DiagramPage: React.FC = () => {
   const [showEditor, setShowEditor] = useState(false);
 
   return (
-    <div className="h-screen flex flex-col">
-      <Toolbar />
-
+    <div className="h-screen flex flex-col relative">
       <div className="flex-1 flex overflow-hidden">
         <ServicePalette />
 
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b">
-            <h2 className="text-sm font-semibold text-gray-700">Canvas</h2>
-            <button
+          <div className="flex items-center justify-end gap-3 m-6 bg-transparent">
+            <Toolbar />
+            <Button
               onClick={() => setShowEditor(!showEditor)}
-              className="px-3 py-1 bg-gray-700 text-white rounded text-sm hover:bg-gray-800"
+              variant="default"
+              size="default"
+              className="bg-black text-white hover:bg-gray-800"
             >
               {showEditor ? 'Hide' : 'Show'} Code Editor
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 flex">
