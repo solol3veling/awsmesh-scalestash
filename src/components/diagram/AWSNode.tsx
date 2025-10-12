@@ -123,36 +123,28 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Control toolbar - absolutely positioned above, outside the box */}
-      {isHovered && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-30">
-          <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 px-1.5 py-0.5">
+      {/* Control toolbar - clean white bubble with spaced options */}
+      {(isHovered || selected) && (
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)] z-30">
+          <div className="flex items-center gap-3 bg-white rounded-md px-3 py-1.5" style={{ backgroundColor: '#ffffff', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
             <button
               onClick={handleToggleLock}
-              className="group relative p-1 transition-opacity duration-150 hover:opacity-70"
+              className="transition-opacity hover:opacity-60"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
               {isLocked ? (
-                <Lock size={12} className="text-amber-500" strokeWidth={2.5} />
+                <Lock size={13} className="text-amber-500" strokeWidth={2} />
               ) : (
-                <Unlock size={12} className="text-gray-500" strokeWidth={2.5} />
+                <Unlock size={13} className="text-gray-600" strokeWidth={2} />
               )}
-              {/* Tooltip */}
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-900 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                {isLocked ? 'Unlock' : 'Lock'}
-              </span>
             </button>
-
-            <div className="w-px h-3 bg-gray-300 mx-0.5" />
 
             <button
               onClick={handleDelete}
-              className="group relative p-1 transition-opacity duration-150 hover:opacity-70"
+              className="transition-opacity hover:opacity-60"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <Trash2 size={12} className="text-red-500" strokeWidth={2.5} />
-              {/* Tooltip */}
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-900 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                Delete
-              </span>
+              <Trash2 size={13} className="text-red-500" strokeWidth={2} />
             </button>
           </div>
         </div>
