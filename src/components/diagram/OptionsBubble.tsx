@@ -20,7 +20,7 @@ const OptionsBubble: React.FC<OptionsBubbleProps> = ({
 }) => {
   return (
     <div
-      className="flex items-center gap-2 bg-white rounded-md px-2 py-1"
+      className="flex items-center gap-3 bg-white rounded-md px-3 py-1.5"
       style={{
         backgroundColor: '#ffffff',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
