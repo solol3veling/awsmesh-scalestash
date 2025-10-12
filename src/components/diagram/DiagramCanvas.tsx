@@ -52,7 +52,12 @@ const DiagramCanvas: React.FC = () => {
     () =>
       edges.map((edge) => ({
         ...edge,
-        type: 'awsEdge',
+        type: edge.type || 'awsEdge',
+        style: {
+          strokeWidth: 1,
+          stroke: '#94a3b8',
+          ...edge.style,
+        },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 8,
@@ -70,11 +75,26 @@ const DiagramCanvas: React.FC = () => {
         edges={edgesWithStyle}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onConnectStart={(_, params) => setConnectionNodeId(params.nodeId || null)}
-        onConnectEnd={() => setConnectionNodeId(null)}
+        onConnect={(connection) => {
+          console.log('DiagramCanvas onConnect called:', connection);
+          onConnect(connection);
+        }}
+        onConnectStart={(_, params) => {
+          console.log('Connection started:', params);
+          setConnectionNodeId(params.nodeId || null);
+        }}
+        onConnectEnd={(event) => {
+          console.log('Connection ended:', event);
+          setConnectionNodeId(null);
+        }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        connectionMode="loose"
+        connectOnClick={false}
+        isValidConnection={(connection) => {
+          console.log('Validating connection:', connection);
+          return connection.source !== connection.target;
+        }}
         fitView
         className="bg-gray-50"
         minZoom={0.1}

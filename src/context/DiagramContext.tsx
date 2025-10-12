@@ -60,7 +60,22 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   );
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection: Connection) => {
+      console.log('Connection made:', connection);
+      const newEdge = {
+        ...connection,
+        id: `edge-${connection.source}-${connection.target}-${Date.now()}`,
+        type: 'awsEdge',
+        style: { strokeWidth: 1, stroke: '#94a3b8' },
+        animated: false,
+      };
+      console.log('Adding edge:', newEdge);
+      setEdges((eds) => {
+        const updatedEdges = addEdge(newEdge, eds);
+        console.log('Updated edges:', updatedEdges);
+        return updatedEdges;
+      });
+    },
     []
   );
 

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Position } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
 import type { NodeData } from '../../types/diagram';
-import AWSConnector from './AWSConnector';
 
 const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(data.label || '');
+  const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
 
   const handleLabelSubmit = () => {
     setIsEditing(false);
@@ -28,6 +28,79 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
 
   const showConnectors = isHovered || selected || data.isConnecting;
 
+  // Helper to get position style for handles
+  const getPositionStyle = (position: Position, pointNumber: number) => {
+    const positions = [33, 50, 67];
+    const percent = positions[pointNumber - 1] || 50;
+
+    switch (position) {
+      case Position.Top:
+        return { top: '-5px', left: `${percent}%`, transform: 'translateX(-50%)' };
+      case Position.Right:
+        return { right: '-5px', top: `${percent}%`, transform: 'translateY(-50%)' };
+      case Position.Bottom:
+        return { bottom: '-5px', left: `${percent}%`, transform: 'translateX(-50%)' };
+      case Position.Left:
+        return { left: '-5px', top: `${percent}%`, transform: 'translateY(-50%)' };
+      default:
+        return {};
+    }
+  };
+
+  // Render a connection point - single handle acts as both source and target with loose connection mode
+  const renderHandle = (position: Position, pointNumber: number, baseId: string) => {
+    const handleId = `${baseId}-${pointNumber}`;
+    const isHandleHovered = hoveredHandle === handleId;
+
+    const baseStyle = getPositionStyle(position, pointNumber);
+
+    const handleStyle = {
+      ...baseStyle,
+      position: 'absolute' as const,
+      width: '8px',
+      height: '8px',
+      border: '1px solid white',
+      borderRadius: '50%',
+      background: isHandleHovered ? '#3b82f6' : '#60a5fa',
+      opacity: showConnectors ? 1 : 0,
+      transition: 'all 150ms',
+      cursor: 'crosshair',
+      zIndex: 10,
+    };
+
+    return (
+      <React.Fragment key={handleId}>
+        {/* Single source handle - connectionMode="loose" allows it to connect anywhere */}
+        <Handle
+          type="source"
+          position={position}
+          id={handleId}
+          onMouseEnter={() => setHoveredHandle(handleId)}
+          onMouseLeave={() => setHoveredHandle(null)}
+          style={handleStyle}
+          isConnectable={showConnectors}
+        />
+
+        {/* Blue overlay on hover */}
+        {showConnectors && isHandleHovered && (
+          <div
+            style={{
+              ...baseStyle,
+              position: 'absolute',
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              background: '#3b82f6',
+              opacity: 0.3,
+              zIndex: 9,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </React.Fragment>
+    );
+  };
+
   return (
     <div
       className="flex flex-col items-center"
@@ -40,26 +113,25 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           selected ? 'ring-1 ring-blue-400 ring-offset-1' : ''
         }`}
       >
-        {/* AWS Connectors - multiple points on each edge for multiple connections */}
         {/* Top edge - 3 connection points */}
-        <AWSConnector position={Position.Top} type="target" id="top-1" isVisible={showConnectors} />
-        <AWSConnector position={Position.Top} type="target" id="top-2" isVisible={showConnectors} />
-        <AWSConnector position={Position.Top} type="target" id="top-3" isVisible={showConnectors} />
+        {renderHandle(Position.Top, 1, 'top')}
+        {renderHandle(Position.Top, 2, 'top')}
+        {renderHandle(Position.Top, 3, 'top')}
 
         {/* Right edge - 3 connection points */}
-        <AWSConnector position={Position.Right} type="source" id="right-1" isVisible={showConnectors} />
-        <AWSConnector position={Position.Right} type="source" id="right-2" isVisible={showConnectors} />
-        <AWSConnector position={Position.Right} type="source" id="right-3" isVisible={showConnectors} />
+        {renderHandle(Position.Right, 1, 'right')}
+        {renderHandle(Position.Right, 2, 'right')}
+        {renderHandle(Position.Right, 3, 'right')}
 
         {/* Bottom edge - 3 connection points */}
-        <AWSConnector position={Position.Bottom} type="source" id="bottom-1" isVisible={showConnectors} />
-        <AWSConnector position={Position.Bottom} type="source" id="bottom-2" isVisible={showConnectors} />
-        <AWSConnector position={Position.Bottom} type="source" id="bottom-3" isVisible={showConnectors} />
+        {renderHandle(Position.Bottom, 1, 'bottom')}
+        {renderHandle(Position.Bottom, 2, 'bottom')}
+        {renderHandle(Position.Bottom, 3, 'bottom')}
 
         {/* Left edge - 3 connection points */}
-        <AWSConnector position={Position.Left} type="target" id="left-1" isVisible={showConnectors} />
-        <AWSConnector position={Position.Left} type="target" id="left-2" isVisible={showConnectors} />
-        <AWSConnector position={Position.Left} type="target" id="left-3" isVisible={showConnectors} />
+        {renderHandle(Position.Left, 1, 'left')}
+        {renderHandle(Position.Left, 2, 'left')}
+        {renderHandle(Position.Left, 3, 'left')}
 
         {/* Icon - scales to fit the box */}
         {data.iconUrl ? (

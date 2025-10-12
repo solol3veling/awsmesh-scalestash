@@ -15,6 +15,8 @@ const AWSEdge: React.FC<EdgeProps> = ({
   label,
   selected,
 }) => {
+  console.log('AWSEdge rendering:', { id, sourceX, sourceY, targetX, targetY });
+
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
