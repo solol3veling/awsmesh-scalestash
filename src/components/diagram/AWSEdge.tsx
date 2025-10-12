@@ -146,27 +146,27 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
               autoFocus
               className="text-center focus:outline-none focus:border-blue-500"
               style={{
-                fontSize: '9px',
-                padding: '2px 6px',
+                fontSize: '8px',
+                padding: '1px 4px',
                 border: '0.5px solid #3b82f6',
                 borderRadius: '2px',
                 backgroundColor: '#ffffff',
-                boxShadow: '0 0 0 3px #f9fafb',
-                minWidth: '40px',
-                maxWidth: '70px'
+                boxShadow: '0 0 0 3px #ffffff',
+                minWidth: '30px',
+                maxWidth: '50px'
               }}
             />
           ) : label ? (
             <div
               className="text-center truncate cursor-pointer"
               style={{
-                fontSize: '9px',
-                padding: '2px 6px',
+                fontSize: '8px',
+                padding: '1px 4px',
                 borderRadius: '2px',
-                backgroundColor: '#f9fafb',
-                boxShadow: '0 0 0 3px #f9fafb',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 0 0 3px #ffffff',
                 color: '#374151',
-                maxWidth: '70px'
+                maxWidth: '50px'
               }}
             >
               {label}
@@ -175,8 +175,8 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
             <div
               className="cursor-pointer"
               style={{
-                fontSize: '9px',
-                padding: '2px 4px',
+                fontSize: '8px',
+                padding: '1px 3px',
                 backgroundColor: 'transparent',
                 color: '#6b7280'
               }}
