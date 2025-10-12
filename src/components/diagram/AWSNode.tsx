@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
 import type { NodeData } from '../../types/diagram';
-import { Lock, Unlock, Trash2 } from 'lucide-react';
+import OptionsBubble from './OptionsBubble';
 
 const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -123,30 +123,15 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Control toolbar - clean white bubble with spaced options */}
+      {/* Control toolbar */}
       {(isHovered || selected) && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)] z-30">
-          <div className="flex items-center gap-3 bg-white rounded-md px-3 py-1.5" style={{ backgroundColor: '#ffffff', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-            <button
-              onClick={handleToggleLock}
-              className="transition-opacity hover:opacity-60"
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-            >
-              {isLocked ? (
-                <Lock size={13} className="text-amber-500" strokeWidth={2} />
-              ) : (
-                <Unlock size={13} className="text-gray-600" strokeWidth={2} />
-              )}
-            </button>
-
-            <button
-              onClick={handleDelete}
-              className="transition-opacity hover:opacity-60"
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-            >
-              <Trash2 size={13} className="text-red-500" strokeWidth={2} />
-            </button>
-          </div>
+          <OptionsBubble
+            isLocked={isLocked}
+            onToggleLock={handleToggleLock}
+            onDelete={handleDelete}
+            showLock={true}
+          />
         </div>
       )}
 
