@@ -16,6 +16,8 @@ interface DiagramContextType {
   addNode: (node: Node) => void;
   removeNode: (nodeId: string) => void;
   updateNodeLabel: (nodeId: string, label: string) => void;
+  removeEdge: (edgeId: string) => void;
+  updateEdgeLabel: (edgeId: string, label: string) => void;
   updateDSL: () => void;
   loadFromDSL: (dsl: DiagramDSL) => void;
   exportDSL: () => DiagramDSL;
@@ -98,6 +100,20 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
     );
   }, []);
 
+  const removeEdge = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
+  }, []);
+
+  const updateEdgeLabel = useCallback((edgeId: string, label: string) => {
+    setEdges((eds) =>
+      eds.map((edge) =>
+        edge.id === edgeId
+          ? { ...edge, label }
+          : edge
+      )
+    );
+  }, []);
+
   // Convert React Flow nodes/edges to DSL JSON
   const updateDSL = useCallback(() => {
     const dslNodes: AWSNode[] = nodes.map((node) => ({
@@ -175,6 +191,8 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         addNode,
         removeNode,
         updateNodeLabel,
+        removeEdge,
+        updateEdgeLabel,
         updateDSL,
         loadFromDSL,
         exportDSL,

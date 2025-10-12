@@ -20,6 +20,8 @@ const DiagramCanvas: React.FC = () => {
     onEdgesChange,
     onConnect,
     updateNodeLabel,
+    removeEdge,
+    updateEdgeLabel,
   } = useDiagram();
 
   const [connectionNodeId, setConnectionNodeId] = React.useState<string | null>(null);
@@ -47,7 +49,7 @@ const DiagramCanvas: React.FC = () => {
     []
   );
 
-  // Add default edge styling and arrow markers
+  // Add default edge styling, arrow markers, and callbacks
   const edgesWithStyle = useMemo(
     () =>
       edges.map((edge) => ({
@@ -64,8 +66,13 @@ const DiagramCanvas: React.FC = () => {
           height: 8,
           color: '#94a3b8',
         },
+        data: {
+          ...edge.data,
+          onDelete: removeEdge,
+          onLabelChange: updateEdgeLabel,
+        },
       })),
-    [edges]
+    [edges, removeEdge, updateEdgeLabel]
   );
 
   return (
