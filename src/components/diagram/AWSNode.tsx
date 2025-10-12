@@ -184,12 +184,14 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           onBlur={handleLabelSubmit}
           onKeyDown={handleKeyDown}
           autoFocus
-          className="text-[8px] px-1 py-0.5 border border-blue-500 rounded bg-white text-center min-w-[50px] max-w-[80px] focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
+          className="text-[10px] px-1 py-0.5 border border-blue-400 rounded bg-white text-center min-w-[40px] max-w-[80px] focus:outline-none focus:border-blue-500 mt-1"
+          style={{ borderWidth: '0.5px', fontSize: '10px' }}
         />
       ) : (
         <div
           onClick={() => setIsEditing(true)}
-          className="text-[8px] px-1 py-0.5 bg-transparent text-gray-500 rounded cursor-text hover:text-gray-900 transition-colors min-w-[50px] max-w-[80px] text-center truncate mt-1"
+          className="text-[10px] px-1 py-0.5 bg-transparent text-gray-500 rounded cursor-text hover:text-gray-700 transition-colors min-w-[40px] max-w-[80px] text-center truncate mt-1"
+          style={{ fontSize: '10px' }}
           title={label || data.service || 'Click to edit label'}
         >
           {label || data.service || 'Add label'}

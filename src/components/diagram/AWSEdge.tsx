@@ -144,17 +144,44 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
               onBlur={handleLabelSubmit}
               onKeyDown={handleKeyDown}
               autoFocus
-              className="text-[10px] px-1.5 py-0.5 border border-blue-500 rounded bg-white text-center min-w-[60px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-center focus:outline-none focus:border-blue-500"
+              style={{
+                fontSize: '9px',
+                padding: '2px 6px',
+                border: '0.5px solid #3b82f6',
+                borderRadius: '2px',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 0 0 3px #f9fafb',
+                minWidth: '40px',
+                maxWidth: '70px'
+              }}
             />
+          ) : label ? (
+            <div
+              className="text-center truncate cursor-pointer"
+              style={{
+                fontSize: '9px',
+                padding: '2px 6px',
+                borderRadius: '2px',
+                backgroundColor: '#f9fafb',
+                boxShadow: '0 0 0 3px #f9fafb',
+                color: '#374151',
+                maxWidth: '70px'
+              }}
+            >
+              {label}
+            </div>
           ) : (
             <div
-              className={`text-[10px] px-1.5 py-0.5 rounded text-gray-600 border cursor-pointer transition-colors ${
-                label
-                  ? 'bg-white border-gray-200 hover:border-blue-400'
-                  : 'bg-transparent border-transparent hover:bg-gray-100 hover:border-gray-200'
-              }`}
+              className="cursor-pointer"
+              style={{
+                fontSize: '9px',
+                padding: '2px 4px',
+                backgroundColor: 'transparent',
+                color: '#6b7280'
+              }}
             >
-              {label || (selected ? 'Double-click to add label' : '')}
+              {selected ? 'Double-click to add label' : ''}
             </div>
           )}
         </div>
