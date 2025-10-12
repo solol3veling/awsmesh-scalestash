@@ -155,6 +155,7 @@ const DiagramCanvas: React.FC = () => {
         minZoom={0.1}
         maxZoom={4}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        translateExtent={[[-2000, -2000], [4000, 4000]]}
         defaultEdgeOptions={{
           type: 'awsEdge',
           markerEnd: {

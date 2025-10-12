@@ -11,10 +11,9 @@ const DiagramPage: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col relative">
-      <div className="flex-1 flex overflow-hidden">
-        <ServicePalette />
+      <ServicePalette />
 
-        <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-[280px] overflow-hidden">
           <div className="flex items-center justify-end gap-3 m-6 bg-transparent">
             <Toolbar />
             <Button
@@ -40,7 +39,6 @@ const DiagramPage: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
       </div>
     </div>
   );

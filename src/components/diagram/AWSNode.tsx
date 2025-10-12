@@ -36,13 +36,13 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
 
     switch (position) {
       case Position.Top:
-        return { top: '-8px', left: `${percent}%`, transform: 'translateX(-50%)' };
+        return { top: '0px', left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Right:
-        return { right: '-8px', top: `${percent}%`, transform: 'translateY(-50%)' };
+        return { right: '0px', top: `${percent}%`, transform: 'translateY(-50%)' };
       case Position.Bottom:
-        return { bottom: '-8px', left: `${percent}%`, transform: 'translateX(-50%)' };
+        return { bottom: '0px', left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Left:
-        return { left: '-8px', top: `${percent}%`, transform: 'translateY(-50%)' };
+        return { left: '0px', top: `${percent}%`, transform: 'translateY(-50%)' };
       default:
         return {};
     }
@@ -126,7 +126,7 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
 
       {/* Icon container - THIS is the connection box */}
       <div
-        className={`relative w-16 h-16 bg-white rounded-lg shadow-sm flex items-center justify-center transition-all ${
+        className={`relative w-16 h-16 bg-transparent flex items-center justify-center transition-all ${
           selected ? 'ring-1 ring-blue-400 ring-offset-1' : ''
         } ${isLocked ? 'ring-1 ring-yellow-400' : ''}`}
       >
@@ -155,10 +155,10 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           <img
             src={data.iconUrl}
             alt={data.service}
-            className="w-14 h-14 object-contain p-1"
+            className="w-[52px] h-[52px] object-contain"
           />
         ) : (
-          <div className="w-14 h-14 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-base">
+          <div className="w-[52px] h-[52px] bg-orange-500 rounded flex items-center justify-center text-white font-bold text-base">
             {data.service?.substring(0, 2).toUpperCase()}
           </div>
         )}
@@ -173,14 +173,14 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           onBlur={handleLabelSubmit}
           onKeyDown={handleKeyDown}
           autoFocus
-          className="text-[10px] px-1 py-0.5 border border-blue-400 rounded bg-white text-center min-w-[40px] max-w-[80px] focus:outline-none focus:border-blue-500 mt-1"
-          style={{ borderWidth: '0.5px', fontSize: '10px' }}
+          className="text-[8px] px-1 py-0.5 border border-blue-400 rounded bg-white text-center min-w-[40px] max-w-[80px] focus:outline-none focus:border-blue-500 mt-1"
+          style={{ borderWidth: '0.5px', fontSize: '8px' }}
         />
       ) : (
         <div
           onClick={() => setIsEditing(true)}
-          className="text-[10px] px-1 py-0.5 bg-transparent text-gray-500 rounded cursor-text hover:text-gray-700 transition-colors min-w-[40px] max-w-[80px] text-center truncate mt-1"
-          style={{ fontSize: '10px' }}
+          className="text-[8px] px-1 py-0.5 bg-transparent text-gray-500 rounded cursor-text hover:text-gray-700 transition-colors min-w-[40px] max-w-[80px] text-center truncate mt-1"
+          style={{ fontSize: '8px' }}
           title={label || data.service || 'Click to edit label'}
         >
           {label || data.service || 'Add label'}
