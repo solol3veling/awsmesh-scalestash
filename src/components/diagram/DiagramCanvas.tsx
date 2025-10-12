@@ -2,7 +2,6 @@ import React, { useMemo, useCallback, useRef } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   BackgroundVariant,
   MarkerType,
   useReactFlow,
@@ -30,7 +29,7 @@ const DiagramCanvas: React.FC = () => {
   } = useDiagram();
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [connectionNodeId, setConnectionNodeId] = React.useState<string | null>(null);
 
   // Add onLabelChange callback and connection state to all nodes
@@ -168,24 +167,20 @@ const DiagramCanvas: React.FC = () => {
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            switch (node.data.category) {
-              case 'Compute':
-                return '#ff6b6b';
-              case 'Storage':
-                return '#4ecdc4';
-              case 'Database':
-                return '#45b7d1';
-              case 'Networking':
-                return '#96ceb4';
-              default:
-                return '#95a5a6';
-            }
-          }}
-          className="bg-white border border-gray-300"
-        />
       </ReactFlow>
+
+      {/* Snap to View button */}
+      <button
+        onClick={() => fitView({ padding: 0.2, duration: 400 })}
+        className="absolute bottom-6 right-6 bg-white hover:bg-gray-100 text-gray-700 p-4 rounded-full shadow-lg hover:shadow-xl transition-all border border-gray-300 z-10"
+        title="Fit View"
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <circle cx="12" cy="12" r="8" strokeDasharray="2 2" />
+          <path strokeLinecap="round" d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+        </svg>
+      </button>
     </div>
   );
 };
