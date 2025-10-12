@@ -145,25 +145,58 @@ const ServicePalette: React.FC = () => {
 
   return (
     <>
-      {/* Toggle button - always visible */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-6 top-6 z-20 bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg transition-all border border-gray-200"
-        title={isOpen ? "Close Panel" : "Open Panel"}
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          ) : (
+      {/* Minimized Icon Bar - visible when closed */}
+      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-16 max-h-[80vh] bg-white rounded-2xl flex flex-col gap-2 p-3 shadow-lg border border-gray-200 z-10 transition-all duration-300 ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
+        {/* Toggle button in minimized bar */}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full aspect-square bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all flex items-center justify-center"
+          title="Open Panel"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          )}
-        </svg>
-      </button>
+          </svg>
+        </button>
 
-      {/* Floating Sidebar Panel */}
-      <div className={`fixed left-20 top-6 bottom-6 w-[320px] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 border border-gray-200 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
+        {/* Show first few services as icons */}
+        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+          {filteredServices.slice(0, 8).map((service) => {
+            const smallIcon = getSmallIcon(service);
+            return (
+              <button
+                key={`mini-${service.id}`}
+                onClick={() => handleAddService(service)}
+                draggable
+                onDragStart={(e) => handleDragStart(e, service)}
+                className="w-full aspect-square bg-gray-50 hover:bg-blue-50 rounded-lg transition-all flex items-center justify-center cursor-move border border-transparent hover:border-blue-300"
+                title={service.name}
+              >
+                {smallIcon ? (
+                  <img src={smallIcon} alt={service.name} className="w-8 h-8 object-contain" />
+                ) : (
+                  <div className="w-8 h-8 bg-[#ff9900] rounded flex items-center justify-center text-white text-xs font-bold">
+                    {service.name.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Full Sidebar Panel - visible when open */}
+      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 border border-gray-200 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
         <div className="p-5 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-2 mb-4">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-all"
+              title="Minimize Panel"
+            >
+              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             <div className="w-8 h-8 bg-[#ff9900] rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
