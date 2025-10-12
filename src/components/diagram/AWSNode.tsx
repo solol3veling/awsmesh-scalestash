@@ -36,13 +36,13 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
 
     switch (position) {
       case Position.Top:
-        return { top: '-5px', left: `${percent}%`, transform: 'translateX(-50%)' };
+        return { top: '-8px', left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Right:
-        return { right: '-5px', top: `${percent}%`, transform: 'translateY(-50%)' };
+        return { right: '-8px', top: `${percent}%`, transform: 'translateY(-50%)' };
       case Position.Bottom:
-        return { bottom: '-5px', left: `${percent}%`, transform: 'translateX(-50%)' };
+        return { bottom: '-8px', left: `${percent}%`, transform: 'translateX(-50%)' };
       case Position.Left:
-        return { left: '-5px', top: `${percent}%`, transform: 'translateY(-50%)' };
+        return { left: '-8px', top: `${percent}%`, transform: 'translateY(-50%)' };
       default:
         return {};
     }
@@ -59,47 +59,28 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
     const handleStyle = {
       ...baseStyle,
       position: 'absolute' as const,
-      width: '8px',
-      height: '8px',
+      width: isHandleHovered ? '8px' : '5px',
+      height: isHandleHovered ? '8px' : '5px',
       border: '1px solid white',
       borderRadius: '50%',
       background: isHandleHovered ? '#3b82f6' : '#60a5fa',
       opacity: showConnectors ? 1 : 0,
-      transition: 'all 150ms',
+      transition: 'all 200ms ease-in-out',
       cursor: isNodeLocked ? 'not-allowed' : 'crosshair',
       zIndex: 10,
     };
 
     return (
-      <React.Fragment key={handleId}>
-        {/* Single source handle - connectionMode="loose" allows it to connect anywhere */}
-        <Handle
-          type="source"
-          position={position}
-          id={handleId}
-          onMouseEnter={() => setHoveredHandle(handleId)}
-          onMouseLeave={() => setHoveredHandle(null)}
-          style={handleStyle}
-          isConnectable={showConnectors && !isNodeLocked}
-        />
-
-        {/* Blue overlay on hover */}
-        {showConnectors && isHandleHovered && (
-          <div
-            style={{
-              ...baseStyle,
-              position: 'absolute',
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#3b82f6',
-              opacity: 0.3,
-              zIndex: 9,
-              pointerEvents: 'none',
-            }}
-          />
-        )}
-      </React.Fragment>
+      <Handle
+        key={handleId}
+        type="source"
+        position={position}
+        id={handleId}
+        onMouseEnter={() => setHoveredHandle(handleId)}
+        onMouseLeave={() => setHoveredHandle(null)}
+        style={handleStyle}
+        isConnectable={showConnectors && !isNodeLocked}
+      />
     );
   };
 
