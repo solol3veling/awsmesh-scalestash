@@ -153,12 +153,12 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
                 backgroundColor: '#ffffff',
                 boxShadow: '0 0 0 3px #ffffff',
                 minWidth: '30px',
-                maxWidth: '50px'
+                maxWidth: '120px'
               }}
             />
           ) : label ? (
             <div
-              className="text-center truncate cursor-pointer"
+              className="text-center cursor-pointer whitespace-nowrap"
               style={{
                 fontSize: '8px',
                 padding: '1px 4px',
@@ -166,7 +166,9 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
                 backgroundColor: '#ffffff',
                 boxShadow: '0 0 0 3px #ffffff',
                 color: '#374151',
-                maxWidth: '50px'
+                maxWidth: '120px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
               }}
             >
               {label}

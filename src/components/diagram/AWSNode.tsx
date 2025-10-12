@@ -115,6 +115,12 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
     }
   };
 
+  const handleDuplicate = () => {
+    if (data.onDuplicate) {
+      data.onDuplicate(id);
+    }
+  };
+
   const isLocked = data.locked || false;
 
   return (
@@ -129,8 +135,10 @@ const AWSNode: React.FC<NodeProps<NodeData>> = ({ data, selected, id }) => {
           <OptionsBubble
             isLocked={isLocked}
             onToggleLock={handleToggleLock}
+            onDuplicate={handleDuplicate}
             onDelete={handleDelete}
             showLock={true}
+            showDuplicate={true}
           />
         </div>
       )}

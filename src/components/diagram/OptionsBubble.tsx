@@ -1,18 +1,22 @@
 import React from 'react';
-import { Lock, Unlock, Trash2 } from 'lucide-react';
+import { Lock, Unlock, Trash2, Copy } from 'lucide-react';
 
 interface OptionsBubbleProps {
   isLocked?: boolean;
   onToggleLock?: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
   showLock?: boolean;
+  showDuplicate?: boolean;
 }
 
 const OptionsBubble: React.FC<OptionsBubbleProps> = ({
   isLocked = false,
   onToggleLock,
   onDelete,
-  showLock = true
+  onDuplicate,
+  showLock = true,
+  showDuplicate = false
 }) => {
   return (
     <div
@@ -33,6 +37,16 @@ const OptionsBubble: React.FC<OptionsBubbleProps> = ({
           ) : (
             <Unlock size={11} className="text-gray-600" strokeWidth={2} />
           )}
+        </button>
+      )}
+
+      {showDuplicate && onDuplicate && (
+        <button
+          onClick={onDuplicate}
+          className="transition-opacity hover:opacity-60"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          <Copy size={11} className="text-blue-500" strokeWidth={2} />
         </button>
       )}
 

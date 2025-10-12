@@ -22,6 +22,7 @@ const DiagramCanvas: React.FC = () => {
     updateNodeLabel,
     toggleNodeLock,
     removeNode,
+    duplicateNode,
     removeEdge,
     updateEdgeLabel,
   } = useDiagram();
@@ -39,10 +40,11 @@ const DiagramCanvas: React.FC = () => {
           onLabelChange: updateNodeLabel,
           onToggleLock: toggleNodeLock,
           onDelete: removeNode,
+          onDuplicate: duplicateNode,
           isConnecting: connectionNodeId !== null,
         },
       })),
-    [nodes, updateNodeLabel, toggleNodeLock, removeNode, connectionNodeId]
+    [nodes, updateNodeLabel, toggleNodeLock, removeNode, duplicateNode, connectionNodeId]
   );
 
   const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);

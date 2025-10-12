@@ -15,6 +15,7 @@ interface DiagramContextType {
   onConnect: (connection: Connection) => void;
   addNode: (node: Node) => void;
   removeNode: (nodeId: string) => void;
+  duplicateNode: (nodeId: string) => void;
   updateNodeLabel: (nodeId: string, label: string) => void;
   toggleNodeLock: (nodeId: string) => void;
   removeEdge: (edgeId: string) => void;
@@ -101,6 +102,37 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   const removeNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
     setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+  }, []);
+
+  const duplicateNode = useCallback((nodeId: string) => {
+    setNodes((nds) => {
+      const nodeToDuplicate = nds.find((n) => n.id === nodeId);
+      if (!nodeToDuplicate) return nds;
+
+      // Deep copy the data to ensure complete independence
+      const newNode: Node = {
+        ...nodeToDuplicate,
+        id: `node-${Date.now()}`,
+        position: {
+          x: nodeToDuplicate.position.x + 80,
+          y: nodeToDuplicate.position.y + 80,
+        },
+        data: JSON.parse(JSON.stringify({
+          ...nodeToDuplicate.data,
+          locked: false, // Don't copy lock state
+          // Remove callback references since they'll be re-added by DiagramCanvas
+          onLabelChange: undefined,
+          onToggleLock: undefined,
+          onDelete: undefined,
+          onDuplicate: undefined,
+          isConnecting: undefined,
+        })),
+        selected: false,
+        draggable: true,
+      };
+
+      return [...nds, newNode];
+    });
   }, []);
 
   const updateNodeLabel = useCallback((nodeId: string, label: string) => {
@@ -213,6 +245,7 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         onConnect,
         addNode,
         removeNode,
+        duplicateNode,
         updateNodeLabel,
         toggleNodeLock,
         removeEdge,
