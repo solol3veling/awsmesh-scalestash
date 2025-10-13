@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useDiagram } from '../../context/DiagramContext';
+import { useDiagram, FLOW_PATTERNS } from '../../context/DiagramContext';
 import { useIconsManifest } from '../../hooks/useIconsManifest';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -9,7 +9,7 @@ interface ServicePaletteProps {
 }
 
 const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShowCodeEditor }) => {
-  const { addNode } = useDiagram();
+  const { addNode, loadFromDSL } = useDiagram();
   const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
   const { theme, toggleTheme } = useTheme();
 
@@ -57,8 +57,8 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
 
     const diagramData = {
       nodes: sampleServices,
-      edges: [
-        // Minimal edge structure - indices reference nodes array
+      connections: [
+        // Minimal connection structure - indices reference nodes array
         {
           source: 0,
           target: 1,
@@ -84,6 +84,22 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
     setUploadMethod('text'); // Default to paste JSON
   };
 
+  // Icon resolver function to look up icons based on service ID
+  const resolveIconFromServiceId = (serviceId: string): string | null => {
+    // Find matching service by uniform service ID
+    const matchingService = services.find(s => {
+      const uniformId = getUniformServiceId(s);
+      return uniformId === serviceId;
+    });
+
+    if (matchingService) {
+      return getLargeIcon(matchingService);
+    }
+
+    console.warn(`Could not find icon for service: ${serviceId}`);
+    return null;
+  };
+
   const handleProcessJSONText = async () => {
     if (!jsonText.trim()) {
       alert('Please paste JSON content');
@@ -104,53 +120,10 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
         return;
       }
 
-      setUploadProgress(40);
+      setUploadProgress(50);
 
-      // Process each node with progress updates
-      const totalNodes = jsonData.nodes.length;
-      let processedNodes = 0;
-
-      for (const [index, node] of jsonData.nodes.entries()) {
-        if (!node.service) {
-          console.warn(`Node at index ${index} is missing "service" field`);
-          continue;
-        }
-
-        // Find matching service by searching for the uniform service ID
-        const matchingService = services.find(s => {
-          const uniformId = getUniformServiceId(s);
-          return uniformId === node.service;
-        });
-
-        if (matchingService) {
-          const largeIcon = getLargeIcon(matchingService);
-          const cleanServiceName = matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim();
-
-          const newNode = {
-            // Use AI-provided ID if available, otherwise auto-generate
-            id: node.id || `node-${Date.now()}-${index}`,
-            type: 'awsNode',
-            position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
-            data: {
-              service: node.service,
-              category: matchingService.category, // Auto-generated from service
-              label: node.label || cleanServiceName, // Use AI label or default
-              iconUrl: largeIcon, // Auto-generated from service
-            },
-          };
-          addNode(newNode);
-          processedNodes++;
-
-          // Update progress
-          const nodeProgress = 40 + ((processedNodes / totalNodes) * 50);
-          setUploadProgress(nodeProgress);
-
-          // Small delay for visual feedback
-          await new Promise(resolve => setTimeout(resolve, 50));
-        } else {
-          console.warn(`Could not find service for: ${node.service}`);
-        }
-      }
+      // Use the existing loadFromDSL function with icon resolver
+      loadFromDSL(jsonData, resolveIconFromServiceId);
 
       setUploadProgress(100);
 
@@ -185,53 +158,10 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
           return;
         }
 
-        setUploadProgress(40);
+        setUploadProgress(50);
 
-        // Process each node with progress updates
-        const totalNodes = jsonData.nodes.length;
-        let processedNodes = 0;
-
-        for (const [index, node] of jsonData.nodes.entries()) {
-          if (!node.service) {
-            console.warn(`Node at index ${index} is missing "service" field`);
-            continue;
-          }
-
-          // Find matching service by searching for the uniform service ID
-          const matchingService = services.find(s => {
-            const uniformId = getUniformServiceId(s);
-            return uniformId === node.service;
-          });
-
-          if (matchingService) {
-            const largeIcon = getLargeIcon(matchingService);
-            const cleanServiceName = matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim();
-
-            const newNode = {
-              // Use AI-provided ID if available, otherwise auto-generate
-              id: node.id || `node-${Date.now()}-${index}`,
-              type: 'awsNode',
-              position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
-              data: {
-                service: node.service,
-                category: matchingService.category, // Auto-generated from service
-                label: node.label || cleanServiceName, // Use AI label or default
-                iconUrl: largeIcon, // Auto-generated from service
-              },
-            };
-            addNode(newNode);
-            processedNodes++;
-
-            // Update progress
-            const nodeProgress = 40 + ((processedNodes / totalNodes) * 50);
-            setUploadProgress(nodeProgress);
-
-            // Small delay for visual feedback
-            await new Promise(resolve => setTimeout(resolve, 50));
-          } else {
-            console.warn(`Could not find service for: ${node.service}`);
-          }
-        }
+        // Use the existing loadFromDSL function with icon resolver
+        loadFromDSL(jsonData, resolveIconFromServiceId);
 
         setUploadProgress(100);
 
@@ -301,107 +231,177 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   };
 
   const handleDownloadReadme = () => {
-    // Generate comprehensive README content
+    // Generate concise AI-friendly README content
     const readmeContent = `# AWS Architecture Diagram JSON Format
 
-## About This Format
-
-Use this minimal JSON format to programmatically generate AWS architecture diagrams. The format only requires essential data - IDs, timestamps, and icons are automatically generated by the app. You can feed this structure to an AI or use it directly to create complex diagrams automatically.
-
-## Service Format
-
-Each node requires a \`service\` field with this format:
-
-\`\`\`
-prefix::category::service-name
-\`\`\`
-
-**Example:** \`arch::compute::amazon-ec2\`
-
-Icons are automatically mapped from the service ID - no need to specify them!
-
-## Available Services
-
-${services
-  .filter(s => s.sizes[64])
-  .map(service => `- ${getUniformServiceId(service)}`)
-  .join('\n')}
-
-## AI-Friendly JSON Format
-
-### What AI Provides:
-- Node IDs (must be unique across entire diagram)
-- Service IDs (from available services list above)
-- Positions (x, y coordinates)
-- Labels (descriptive names)
-- Edge IDs
-- Edge connections (source and target node IDs)
-
-### What App Auto-Generates:
-- Icons (automatically from service ID)
-- Categories (automatically from service ID)
-- Types (automatically from service ID)
-
-### Example JSON:
+## JSON Structure
 
 \`\`\`json
 {
   "nodes": [
     {
-      "id": "web-server",
       "service": "arch::compute::amazon-ec2",
       "position": { "x": 100, "y": 100 },
       "label": "Web Server"
-    },
-    {
-      "id": "database",
-      "service": "arch::database::amazon-rds",
-      "position": { "x": 400, "y": 100 },
-      "label": "Database"
-    },
-    {
-      "id": "storage",
-      "service": "arch::storage::amazon-s3",
-      "position": { "x": 250, "y": 300 },
-      "label": "File Storage"
     }
   ],
-  "edges": [
+  "connections": [
     {
-      "id": "conn-1",
-      "source": "web-server",
-      "target": "database",
+      "source": 0,
+      "target": 1,
       "label": "queries"
-    },
-    {
-      "id": "conn-2",
-      "source": "web-server",
-      "target": "storage",
-      "label": "stores files"
     }
   ]
 }
 \`\`\`
 
-## Usage Tips for AI Generation
+## Fields
 
-- **IMPORTANT:** Node IDs must be unique across the entire diagram
-- Use descriptive, unique node IDs (e.g., "web-server", "primary-database", "cache-1") for easier edge connections
-- Edge \`source\` and \`target\` must reference existing node IDs
-- Position coordinates should be calculated neatly based on architecture flow
-- Labels are optional but recommended for context (e.g., "Web Server", "Primary DB")
-- Feed this format to an AI (like Claude or ChatGPT) with a prompt describing the architecture
+### nodes (required)
+- \`service\`: Service ID (format: \`prefix::category::service-name\`)
+- \`position\`: Coordinates \`{ x, y }\` in pixels
+- \`label\`: Display name (optional)
 
-## Example Prompt for AI
+### connections (optional)
+- \`source\`: Source node index (0, 1, 2...) or node ID string
+- \`target\`: Target node index (0, 1, 2...) or node ID string
+- \`flow\`: Connection flow pattern (optional, see Flow Patterns section below)
+- \`label\`: Connection description (optional)
 
-"Generate an AWS architecture diagram JSON for a three-tier web application with:
-- EC2 web servers behind a load balancer
-- RDS database for persistence
-- S3 for static file storage
-- CloudFront for CDN
-- ElastiCache for caching
+**Connection behavior:**
+- If \`flow\` is omitted, handles are auto-selected based on node positions
+- Use \`flow\` for precise control over connection paths
 
-Use the JSON format from the documentation. Position the services in a logical flow from left to right."
+## Available Services
+
+${services
+  .filter(s => s.sizes[64])
+  .map(service => `${getUniformServiceId(service)}`)
+  .join('\n')}
+
+## Example 1: Basic Diagram (using semantic keywords)
+
+\`\`\`json
+{
+  "nodes": [
+    {
+      "service": "arch::compute::amazon-ec2",
+      "position": { "x": 100, "y": 100 },
+      "label": "Web Server"
+    },
+    {
+      "service": "arch::database::amazon-rds",
+      "position": { "x": 400, "y": 100 },
+      "label": "Database"
+    },
+    {
+      "service": "arch::storage::amazon-s3",
+      "position": { "x": 250, "y": 300 },
+      "label": "Storage"
+    }
+  ],
+  "connections": [
+    {
+      "source": 0,
+      "target": 1,
+      "flow": "horizontal",
+      "label": "queries"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "flow": "vertical",
+      "label": "uploads to"
+    }
+  ]
+}
+\`\`\`
+
+## Example 2: Multiple connections from same node (using custom handles)
+
+\`\`\`json
+{
+  "nodes": [
+    {
+      "service": "arch::compute::amazon-ec2",
+      "position": { "x": 100, "y": 200 },
+      "label": "API Server"
+    },
+    {
+      "service": "arch::database::amazon-rds",
+      "position": { "x": 400, "y": 100 },
+      "label": "User DB"
+    },
+    {
+      "service": "arch::database::amazon-dynamodb",
+      "position": { "x": 400, "y": 200 },
+      "label": "Session DB"
+    },
+    {
+      "service": "arch::storage::amazon-s3",
+      "position": { "x": 400, "y": 300 },
+      "label": "Media Storage"
+    }
+  ],
+  "connections": [
+    {
+      "source": 0,
+      "target": 1,
+      "flow": "right::left::1::2",
+      "label": "user queries"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "flow": "right::left::2::2",
+      "label": "session data"
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "flow": "right::left::3::2",
+      "label": "media uploads"
+    }
+  ]
+}
+\`\`\`
+
+## Node Handle System
+
+**Each node has 12 connection handles** (3 per side):
+
+\`\`\`
+        top-1   top-2   top-3
+           •      •      •
+    left-1 •              • right-1
+    left-2 •    [NODE]    • right-2
+    left-3 •              • right-3
+           •      •      •
+     bottom-1  bottom-2  bottom-3
+\`\`\`
+
+**Handle positions:**
+- Position \`1\`: Top/Left of each side
+- Position \`2\`: Middle of each side (default)
+- Position \`3\`: Bottom/Right of each side
+
+## Flow Patterns
+
+**Option 1: Semantic keywords** (simple, recommended for AI)
+${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[key].source} → ${FLOW_PATTERNS[key].target}`).join('\n')}
+
+**Option 2: Custom format** (precise control over all 12 handles)
+- Full format: \`"sourceDirection::targetDirection::sourceHandle::targetHandle"\`
+  - Example: \`"right::left::1::3"\` = right-1 → left-3
+  - Example: \`"bottom::top::2::1"\` = bottom-2 → top-1
+- Short format: \`"sourceDirection::targetDirection"\` (uses middle handles)
+  - Example: \`"right::left"\` = right-2 → left-2
+  - Example: \`"bottom::top"\` = bottom-2 → top-2
+
+**When to use which:**
+- Use semantic keywords for common patterns (horizontal, vertical, l-shapes)
+- Use custom format when multiple connections need different handles on same side
+- Omit \`flow\` entirely to let the system auto-select based on node positions
 `;
 
     // Create and download the file
@@ -1120,7 +1120,7 @@ Use the JSON format from the documentation. Position the services in a logical f
                         <textarea
                           value={jsonText}
                           onChange={(e) => setJsonText(e.target.value)}
-                          placeholder={`Paste your JSON here...\n\nExample:\n{\n  "nodes": [\n    {\n      "id": "web-server",\n      "service": "arch::compute::amazon-ec2",\n      "position": { "x": 100, "y": 100 },\n      "label": "Web Server"\n    }\n  ],\n  "edges": []\n}`}
+                          placeholder={`Paste your JSON here...\n\nExample:\n{\n  "nodes": [\n    {\n      "id": "web-server",\n      "service": "arch::compute::amazon-ec2",\n      "position": { "x": 100, "y": 100 },\n      "label": "Web Server"\n    }\n  ],\n  "connections": []\n}`}
                           className={`w-full h-64 p-4 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 ${
                             theme === 'dark'
                               ? 'bg-[#1a252f] text-gray-300 border border-gray-700 focus:ring-[#ff9900] placeholder:text-gray-600'
@@ -1146,7 +1146,7 @@ Use the JSON format from the documentation. Position the services in a logical f
 
                       {/* Info Text */}
                       <p className={`text-xs mt-4 text-center ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                        Paste JSON content following the AI-friendly format with nodes and edges
+                        Paste JSON content following the AI-friendly format with nodes and connections
                       </p>
                     </>
                   ) : (
@@ -1413,15 +1413,67 @@ Use the JSON format from the documentation. Position the services in a logical f
                   </div>
                 </div>
 
-                {/* JSON Example */}
+                {/* Node Handle System */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Node Handle System
+                  </h3>
+                  <p className="text-sm mb-3">
+                    Each node has <strong>12 connection handles</strong> (3 per side) for precise connection control:
+                  </p>
+                  <pre className={`p-3 rounded-lg text-xs ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+{`        top-1   top-2   top-3
+           •      •      •
+    left-1 •              • right-1
+    left-2 •    [NODE]    • right-2
+    left-3 •              • right-3
+           •      •      •
+     bottom-1  bottom-2  bottom-3`}
+                  </pre>
+                  <ul className="text-xs mt-2 space-y-1">
+                    <li>• Position <strong>1</strong>: Top/Left of each side</li>
+                    <li>• Position <strong>2</strong>: Middle of each side (default)</li>
+                    <li>• Position <strong>3</strong>: Bottom/Right of each side</li>
+                  </ul>
+                </div>
+
+                {/* Flow Patterns */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Connection Flow Patterns
+                  </h3>
+                  <p className="text-sm mb-3">
+                    <strong>Option 1: Semantic keywords</strong> (simple, recommended):
+                  </p>
+                  <div className={`p-3 rounded-lg text-xs mb-3 ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {Object.keys(FLOW_PATTERNS).slice(0, 6).map(key => (
+                      <div key={key}>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>{key}</code></div>
+                    ))}
+                    <div className="mt-1 opacity-75">...and more</div>
+                  </div>
+                  <p className="text-sm mb-2">
+                    <strong>Option 2: Custom format</strong> (precise control):
+                  </p>
+                  <ul className="text-xs space-y-1 mb-2">
+                    <li>• Full: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"right::left::1::3"</code> = right-1 → left-3</li>
+                    <li>• Short: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"right::left"</code> = right-2 → left-2 (uses middle handles)</li>
+                  </ul>
+                </div>
+
+                {/* JSON Example 1 */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    AI-Friendly JSON Format
+                    Example 1: Basic Diagram
                   </h3>
-                  <p className="text-xs mb-3 opacity-75">
-                    AI provides: node IDs, service types, positions, labels, and edge connections.
-                    App auto-generates: icons, categories, and types.
-                  </p>
+                  <p className="text-sm mb-2">Using semantic keywords for simple connections:</p>
                   <pre className={`p-4 rounded-lg overflow-x-auto text-xs ${
                     theme === 'dark'
                       ? 'bg-[#1a252f] text-gray-300'
@@ -1430,40 +1482,98 @@ Use the JSON format from the documentation. Position the services in a logical f
 {`{
   "nodes": [
     {
-      "id": "web-server",
       "service": "arch::compute::amazon-ec2",
       "position": { "x": 100, "y": 100 },
       "label": "Web Server"
     },
     {
-      "id": "database",
       "service": "arch::database::amazon-rds",
       "position": { "x": 400, "y": 100 },
       "label": "Database"
     },
     {
-      "id": "storage",
       "service": "arch::storage::amazon-s3",
       "position": { "x": 250, "y": 300 },
-      "label": "File Storage"
+      "label": "Storage"
     }
   ],
-  "edges": [
+  "connections": [
     {
-      "id": "conn-1",
-      "source": "web-server",
-      "target": "database",
+      "source": 0,
+      "target": 1,
+      "flow": "horizontal",
       "label": "queries"
     },
     {
-      "id": "conn-2",
-      "source": "web-server",
-      "target": "storage",
-      "label": "stores files"
+      "source": 0,
+      "target": 2,
+      "flow": "vertical",
+      "label": "uploads to"
     }
   ]
 }`}
                   </pre>
+                </div>
+
+                {/* JSON Example 2 */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Example 2: Multiple Connections
+                  </h3>
+                  <p className="text-sm mb-2">Using custom handles for multiple connections from same node:</p>
+                  <pre className={`p-4 rounded-lg overflow-x-auto text-xs ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+{`{
+  "nodes": [
+    {
+      "service": "arch::compute::amazon-ec2",
+      "position": { "x": 100, "y": 200 },
+      "label": "API Server"
+    },
+    {
+      "service": "arch::database::amazon-rds",
+      "position": { "x": 400, "y": 100 },
+      "label": "User DB"
+    },
+    {
+      "service": "arch::database::amazon-dynamodb",
+      "position": { "x": 400, "y": 200 },
+      "label": "Session DB"
+    },
+    {
+      "service": "arch::storage::amazon-s3",
+      "position": { "x": 400, "y": 300 },
+      "label": "Media Storage"
+    }
+  ],
+  "connections": [
+    {
+      "source": 0,
+      "target": 1,
+      "flow": "right::left::1::2",
+      "label": "user queries"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "flow": "right::left::2::2",
+      "label": "session data"
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "flow": "right::left::3::2",
+      "label": "media uploads"
+    }
+  ]
+}`}
+                  </pre>
+                  <p className="text-xs mt-2 opacity-75">
+                    Note: API Server uses three different handles on its right side (right-1, right-2, right-3) to connect to three services.
+                  </p>
                 </div>
 
                 {/* Usage Tips */}
@@ -1472,14 +1582,14 @@ Use the JSON format from the documentation. Position the services in a logical f
                     Usage Tips for AI Generation
                   </h3>
                   <ul className="text-sm space-y-2 list-disc list-inside">
-                    <li><strong>AI provides:</strong> node IDs, service IDs, positions (x, y), labels, edge IDs, and connections</li>
-                    <li><strong>App generates:</strong> icons, categories, types - automatically from service ID</li>
-                    <li><strong className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>IMPORTANT:</strong> Node IDs must be unique across the entire diagram</li>
-                    <li>Use descriptive, unique node IDs (e.g., "web-server", "primary-database", "cache-1") for easier edge connections</li>
-                    <li>Edge <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>source</code> and <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>target</code> must reference existing node IDs</li>
-                    <li>Position coordinates should be calculated neatly based on architecture flow</li>
-                    <li>Labels are optional but recommended for context (e.g., "Web Server", "Primary DB")</li>
-                    <li>Feed this format to an AI (like Claude or ChatGPT) with a prompt describing the architecture</li>
+                    <li><strong className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>CRITICAL:</strong> JSON must have a <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>nodes</code> array (required) and optionally a <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>connections</code> array</li>
+                    <li><strong className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>IMPORTANT:</strong> Connection <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>source</code> and <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>target</code> use array indices (0, 1, 2...) - can also use node ID strings</li>
+                    <li>Connection handles are auto-selected based on node positions for intuitive flow</li>
+                    <li>Optional: Specify <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>flow</code> field using keywords (e.g., "horizontal", "vertical", "l-shape-down") or custom directions (e.g., "right::left::2::1")</li>
+                    <li>Node <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>id</code> values are optional but must be unique if provided</li>
+                    <li>Position coordinates are in pixels (x and y)</li>
+                    <li>Labels and connection labels are optional but recommended for context</li>
+                    <li>If <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>connections</code> array is omitted, nodes will be created without connections</li>
                   </ul>
                 </div>
               </div>

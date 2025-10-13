@@ -30,10 +30,17 @@ export interface AWSNode {
   };
 }
 
+export type ConnectionDirection = 'top' | 'right' | 'bottom' | 'left';
+
 export interface Connection {
   id?: string; // Optional for minimal JSON
   source: string | number; // Support both node IDs and array indices
   target: string | number; // Support both node IDs and array indices
+  flow?: string; // Simple format: "right::left" (sourceDirection::targetDirection) - AI-friendly
+  sourceDirection?: ConnectionDirection; // Optional: which side to connect from (e.g., "right", "bottom")
+  targetDirection?: ConnectionDirection; // Optional: which side to connect to (e.g., "left", "top")
+  sourceHandle?: string; // Optional: specific handle ID (e.g., "right-2", "bottom-1") - overrides sourceDirection
+  targetHandle?: string; // Optional: specific handle ID (e.g., "left-2", "top-1") - overrides targetDirection
   label?: string;
   type?: 'solid' | 'dashed' | 'dotted';
   animated?: boolean;

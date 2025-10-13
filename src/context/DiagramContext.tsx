@@ -17,6 +17,30 @@ const getUniformServiceId = (serviceName: string, category: string): string => {
   return `${prefix}::${normalizedCategory}::${normalizedService}`;
 };
 
+// Flow pattern keywords - maps semantic names to handle directions
+export const FLOW_PATTERNS: Record<string, { source: string; target: string }> = {
+  // Horizontal flows
+  'horizontal': { source: 'right-2', target: 'left-2' },
+  'horizontal-reverse': { source: 'left-2', target: 'right-2' },
+
+  // Vertical flows
+  'vertical': { source: 'bottom-2', target: 'top-2' },
+  'vertical-reverse': { source: 'top-2', target: 'bottom-2' },
+
+  // Diagonal flows
+  'diagonal-down': { source: 'bottom-2', target: 'right-2' },
+  'diagonal-up': { source: 'top-2', target: 'right-2' },
+
+  // L-shaped flows
+  'l-shape-down': { source: 'right-2', target: 'top-2' },
+  'l-shape-up': { source: 'right-2', target: 'bottom-2' },
+  'l-shape-left-down': { source: 'left-2', target: 'top-2' },
+  'l-shape-left-up': { source: 'left-2', target: 'bottom-2' },
+};
+
+// Helper function to get all available flow pattern names
+export const getFlowPatternNames = (): string[] => Object.keys(FLOW_PATTERNS);
+
 interface DiagramContextType {
   nodes: Node[];
   edges: Edge[];
@@ -34,7 +58,7 @@ interface DiagramContextType {
   removeEdge: (edgeId: string) => void;
   updateEdgeLabel: (edgeId: string, label: string) => void;
   updateDSL: () => void;
-  loadFromDSL: (dsl: DiagramDSL) => void;
+  loadFromDSL: (dsl: DiagramDSL, iconResolver?: (service: string) => string | null) => void;
   exportDSL: () => DiagramDSL;
 }
 
@@ -225,18 +249,51 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   }, [nodes, edges]);
 
   // Load diagram from DSL JSON
-  const loadFromDSL = useCallback((dslData: DiagramDSL) => {
-    const flowNodes: Node[] = dslData.nodes.map((node, index) => ({
-      id: node.id || `node-${Date.now()}-${index}`,
-      type: 'awsNode',
-      position: node.position,
-      data: {
-        service: node.service,
-        category: node.category || 'Compute',
-        label: node.label || node.service,
-        ...node.data,
-      },
-    }));
+  const loadFromDSL = useCallback((dslData: DiagramDSL, iconResolver?: (service: string) => string | null) => {
+    const flowNodes: Node[] = dslData.nodes.map((node, index) => {
+      const iconUrl = iconResolver ? iconResolver(node.service) : null;
+
+      return {
+        id: node.id || `node-${Date.now()}-${index}`,
+        type: 'awsNode',
+        position: node.position,
+        data: {
+          service: node.service,
+          category: node.category || 'Compute',
+          label: node.label || node.service,
+          iconUrl: iconUrl || node.data?.iconUrl, // Use resolved icon or fallback to existing
+          ...node.data,
+        },
+      };
+    });
+
+    // Convert direction to handle (uses middle handle by default)
+    const directionToHandle = (direction: string, position: number = 2): string => {
+      return `${direction}-${position}`;
+    };
+
+    // Smart handle selection based on node positions
+    const selectBestHandle = (sourceNode: any, targetNode: any, isSource: boolean): string => {
+      const dx = targetNode.position.x - sourceNode.position.x;
+      const dy = targetNode.position.y - sourceNode.position.y;
+
+      // Determine primary direction based on distance
+      if (Math.abs(dx) > Math.abs(dy)) {
+        // Horizontal connection is dominant
+        if (isSource) {
+          return dx > 0 ? 'right-2' : 'left-2'; // Going right or left
+        } else {
+          return dx > 0 ? 'left-2' : 'right-2'; // Coming from left or right
+        }
+      } else {
+        // Vertical connection is dominant
+        if (isSource) {
+          return dy > 0 ? 'bottom-2' : 'top-2'; // Going down or up
+        } else {
+          return dy > 0 ? 'top-2' : 'bottom-2'; // Coming from above or below
+        }
+      }
+    };
 
     // Handle both index-based (0, 1, 2) and ID-based edge references
     const flowEdges: Edge[] = (dslData.connections || []).map((conn) => {
@@ -247,10 +304,57 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         ? flowNodes[conn.target]?.id
         : conn.target;
 
+      // Find source and target nodes for smart handle selection
+      const sourceNode = flowNodes.find(n => n.id === sourceId);
+      const targetNode = flowNodes.find(n => n.id === targetId);
+
+      // Priority: sourceHandle > flow > sourceDirection/targetDirection > auto-select
+      let sourceHandle = conn.sourceHandle;
+      let targetHandle = conn.targetHandle;
+
+      // Parse flow field if provided
+      if (!sourceHandle && !targetHandle && conn.flow) {
+        // Check if it's a keyword pattern
+        if (FLOW_PATTERNS[conn.flow]) {
+          sourceHandle = FLOW_PATTERNS[conn.flow].source;
+          targetHandle = FLOW_PATTERNS[conn.flow].target;
+        } else {
+          // Otherwise parse as direction format: "right::left" or "right::left::2::1"
+          const flowParts = conn.flow.split('::');
+          if (flowParts.length >= 2) {
+            const sourceDir = flowParts[0];
+            const targetDir = flowParts[1];
+            const sourcePos = flowParts[2] || '2'; // Default to middle handle
+            const targetPos = flowParts[3] || '2'; // Default to middle handle
+
+            sourceHandle = `${sourceDir}-${sourcePos}`;
+            targetHandle = `${targetDir}-${targetPos}`;
+          }
+        }
+      }
+
+      // If specific handle not provided, check for direction
+      if (!sourceHandle && conn.sourceDirection) {
+        sourceHandle = directionToHandle(conn.sourceDirection);
+      }
+      if (!targetHandle && conn.targetDirection) {
+        targetHandle = directionToHandle(conn.targetDirection);
+      }
+
+      // If still no handle, auto-select based on position
+      if (!sourceHandle && sourceNode && targetNode) {
+        sourceHandle = selectBestHandle(sourceNode, targetNode, true);
+      }
+      if (!targetHandle && sourceNode && targetNode) {
+        targetHandle = selectBestHandle(sourceNode, targetNode, false);
+      }
+
       return {
         id: conn.id || `edge-${sourceId}-${targetId}-${Date.now()}`,
         source: sourceId as string,
         target: targetId as string,
+        sourceHandle: sourceHandle,
+        targetHandle: targetHandle,
         label: conn.label,
         animated: conn.animated,
         type: 'awsEdge',
