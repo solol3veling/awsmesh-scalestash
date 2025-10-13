@@ -1,0 +1,11 @@
+- add grouping
+- add aws groups
+- add export as png, json, pdf (with or without bg)
+- add share as link
+- add save as (use localstorage)
+- fix and do the recent on the search
+- add node direct
+- i want me adding json to render the design
+
+
+(add ai to json to render)

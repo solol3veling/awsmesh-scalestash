@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDiagram } from '../../context/DiagramContext';
 import { useIconsManifest } from '../../hooks/useIconsManifest';
+import { useTheme } from '../../context/ThemeContext';
 
 const ServicePalette: React.FC = () => {
   const { addNode } = useDiagram();
   const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
+  const { theme, toggleTheme } = useTheme();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,12 +169,100 @@ const ServicePalette: React.FC = () => {
         </svg>
       </div>
 
+      {/* Options Container - top right */}
+      <div className={`fixed top-6 right-6 z-20 rounded-full shadow-lg border flex items-center gap-1 p-1 ${
+        theme === 'dark'
+          ? 'bg-[#232f3e] border-gray-700'
+          : 'bg-white border-gray-200'
+      }`}>
+        {/* Share button */}
+        <button
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title="Share"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            Share
+          </span>
+        </button>
+
+        {/* Code Editor button */}
+        <button
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title="Code Editor"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            Code Editor
+          </span>
+        </button>
+
+        {/* Divider */}
+        <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />
+
+        {/* Theme Toggle - smaller */}
+        <button
+          onClick={toggleTheme}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          )}
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+          </span>
+        </button>
+      </div>
+
       {/* Minimized Icon Bar - visible when closed */}
-      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-16 max-h-[80vh] bg-white rounded-2xl flex flex-col gap-2 p-3 shadow-lg border border-gray-200 z-10 transition-all duration-300 ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
+      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-16 max-h-[80vh] rounded-2xl flex flex-col gap-2 p-3 shadow-lg border z-10 transition-all duration-300 ${
+        theme === 'dark'
+          ? 'bg-[#232f3e] border-gray-700'
+          : 'bg-white border-gray-200'
+      } ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
         {/* Toggle button in minimized bar */}
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full aspect-square bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all flex items-center justify-center"
+          className={`w-full aspect-square rounded-lg transition-all flex items-center justify-center ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] hover:bg-[#2d3f52] text-gray-300'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+          }`}
           title="Open Panel"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -194,7 +284,11 @@ const ServicePalette: React.FC = () => {
                 onClick={() => handleAddService(service)}
                 draggable
                 onDragStart={(e) => handleDragStart(e, service)}
-                className="w-full aspect-square bg-gray-50 hover:bg-blue-50 rounded-lg transition-all flex items-center justify-center cursor-move border border-transparent hover:border-blue-300"
+                className={`w-full aspect-square rounded-lg transition-all flex items-center justify-center cursor-move border ${
+                  theme === 'dark'
+                    ? 'bg-[#1a252f] hover:bg-[#2d3f52] border-transparent hover:border-[#ff9900]/50'
+                    : 'bg-gray-50 hover:bg-blue-50 border-transparent hover:border-blue-300'
+                }`}
                 title={cleanName || service.name}
               >
                 {smallIcon ? (
@@ -211,7 +305,9 @@ const ServicePalette: React.FC = () => {
       </div>
 
       {/* Full Sidebar Panel - visible when open */}
-      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
+      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 ${
+        theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'
+      } ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
         {/* Search header with AWS dark color */}
         <div className="bg-[#232f3e] rounded-t-2xl px-5 py-7 flex-shrink-0 relative">
           <div className="relative flex items-center gap-3 pr-10">
@@ -255,7 +351,11 @@ const ServicePalette: React.FC = () => {
           </button>
         </div>
 
-      <div className="flex overflow-x-auto border-b border-gray-200 px-5 py-3 gap-2 flex-shrink-0 scrollbar-thin bg-gray-50">
+      <div className={`flex overflow-x-auto border-b px-5 py-3 gap-2 flex-shrink-0 scrollbar-thin ${
+        theme === 'dark'
+          ? 'bg-[#1a252f] border-gray-700'
+          : 'bg-gray-50 border-gray-200'
+      }`}>
         {categories
           .filter(cat => cat !== 'All' && cat !== 'Other')
           .map((cat) => {
@@ -270,8 +370,12 @@ const ServicePalette: React.FC = () => {
                 }}
                 className={`px-3 py-1.5 text-[11px] rounded-lg whitespace-nowrap flex-shrink-0 transition-all ${
                   selectedCategory === cat
-                    ? 'bg-blue-500 text-white font-semibold shadow-md'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? theme === 'dark'
+                      ? 'bg-[#ff9900] text-white font-semibold shadow-md'
+                      : 'bg-blue-500 text-white font-semibold shadow-md'
+                    : theme === 'dark'
+                      ? 'bg-[#2d3f52] text-gray-300 hover:bg-[#374557]'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
                 {cat} <span className="ml-1 opacity-70">({count})</span>
@@ -280,12 +384,14 @@ const ServicePalette: React.FC = () => {
           })}
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-white">
+      <div className={`flex-1 overflow-y-auto overflow-x-hidden p-4 ${
+        theme === 'dark' ? 'bg-[#1a252f]' : 'bg-white'
+      }`}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#ff9900] mx-auto mb-3"></div>
-              <p className="text-sm text-gray-600">Loading icons...</p>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading icons...</p>
             </div>
           </div>
         ) : error ? (
@@ -296,16 +402,20 @@ const ServicePalette: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <p className="text-sm text-gray-800 font-medium mb-2">No Icons Found</p>
-              <p className="text-xs text-gray-600 mb-3">{error}</p>
-              <code className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200">npm run icons:generate</code>
+              <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>No Icons Found</p>
+              <p className={`text-xs mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{error}</p>
+              <code className={`text-xs px-2 py-1 rounded border ${
+                theme === 'dark'
+                  ? 'bg-[#2d3f52] text-gray-300 border-gray-700'
+                  : 'bg-gray-100 text-gray-700 border-gray-200'
+              }`}>npm run icons:generate</code>
             </div>
           </div>
         ) : filteredServices.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center p-4">
-              <p className="text-sm text-gray-800">No services found</p>
-              <p className="text-xs text-gray-600 mt-1">Try a different search</p>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>No services found</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Try a different search</p>
             </div>
           </div>
         ) : (
@@ -318,7 +428,11 @@ const ServicePalette: React.FC = () => {
                     draggable
                     onDragStart={(e) => handleDragStart(e, service)}
                     onClick={() => handleAddService(service)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-blue-500/20 hover:scale-105 cursor-move transition-all flex-shrink-0 group border border-transparent hover:border-blue-400/50"
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl hover:scale-105 cursor-move transition-all flex-shrink-0 group border ${
+                      theme === 'dark'
+                        ? 'hover:bg-[#ff9900]/20 border-transparent hover:border-[#ff9900]/50'
+                        : 'hover:bg-blue-500/20 border-transparent hover:border-blue-400/50'
+                    }`}
                     style={{ width: 'calc(33.333% - 8px)' }}
                   >
                   <div className="flex flex-col items-center gap-1">
@@ -345,8 +459,11 @@ const ServicePalette: React.FC = () => {
                       </div>
                     )}
                     <div
-                      className="text-xs text-center font-medium line-clamp-2 w-full leading-tight break-words group-hover:text-blue-600 transition-colors"
-                      style={{ color: '#374151' }}
+                      className={`text-xs text-center font-medium line-clamp-2 w-full leading-tight break-words transition-colors ${
+                        theme === 'dark'
+                          ? 'text-gray-300 group-hover:text-[#ff9900]'
+                          : 'text-gray-700 group-hover:text-blue-600'
+                      }`}
                     >
                       {(() => {
                         const cleaned = service.name
@@ -357,7 +474,9 @@ const ServicePalette: React.FC = () => {
                       })()}
                     </div>
                     {service.category !== 'Other' && (
-                      <div className="text-[10px] truncate w-full text-center" style={{ color: '#9ca3af' }}>
+                      <div className={`text-[10px] truncate w-full text-center ${
+                        theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
                         {service.category}
                       </div>
                     )}
@@ -369,14 +488,22 @@ const ServicePalette: React.FC = () => {
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-        <span className="text-sm text-gray-600">
+      <div className={`p-4 border-t flex items-center justify-between ${
+        theme === 'dark'
+          ? 'border-gray-700 bg-[#232f3e]'
+          : 'border-gray-200 bg-gray-50'
+      }`}>
+        <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {loading ? 'Loading...' : `${filteredServices.length} services`}
         </span>
         {!loading && !searchQuery && selectedCategory === 'All' && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
+            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
+              theme === 'dark'
+                ? 'text-[#ff9900] hover:text-white bg-[#ff9900]/20 hover:bg-[#ff9900]/30'
+                : 'text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100'
+            }`}
           >
             {showAll ? 'View Less' : 'View All'}
           </button>

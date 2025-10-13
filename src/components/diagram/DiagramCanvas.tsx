@@ -9,6 +9,7 @@ import ReactFlow, {
 import type { NodeTypes, EdgeTypes } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useDiagram } from '../../context/DiagramContext';
+import { useTheme } from '../../context/ThemeContext';
 import AWSNode from './AWSNode';
 import AWSEdge from './AWSEdge';
 
@@ -27,6 +28,7 @@ const DiagramCanvas: React.FC = () => {
     updateEdgeLabel,
     addNode,
   } = useDiagram();
+  const { theme } = useTheme();
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
@@ -160,7 +162,7 @@ const DiagramCanvas: React.FC = () => {
           return connection.source !== connection.target;
         }}
         fitView
-        className="bg-gray-50"
+        className={theme === 'dark' ? 'bg-[#1a252f]' : 'bg-gray-50'}
         minZoom={0.3}
         maxZoom={5}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
@@ -175,14 +177,23 @@ const DiagramCanvas: React.FC = () => {
           },
         }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={12}
+          size={1}
+          color={theme === 'dark' ? '#374151' : '#d1d5db'}
+        />
         <Controls />
       </ReactFlow>
 
       {/* Snap to View button */}
       <button
         onClick={() => fitView({ padding: 0.2, duration: 400 })}
-        className="absolute bottom-6 right-6 bg-white hover:bg-gray-100 text-gray-700 p-4 rounded-full shadow-lg hover:shadow-xl transition-all border border-gray-300 z-10"
+        className={`absolute bottom-6 right-6 p-4 rounded-full shadow-lg hover:shadow-xl transition-all border z-10 ${
+          theme === 'dark'
+            ? 'bg-[#232f3e] hover:bg-[#2d3f52] text-gray-300 border-gray-700'
+            : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-300'
+        }`}
         title="Fit View"
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
