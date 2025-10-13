@@ -1,13 +1,25 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDiagram } from '../../context/DiagramContext';
 import { useIconsManifest } from '../../hooks/useIconsManifest';
 
 const ServicePalette: React.FC = () => {
   const { addNode } = useDiagram();
   const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
+
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus search input when sidebar opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      // Small delay to ensure transition has started
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
 
   // Popular AWS services to show by default (20 most commonly used)
   const popularServices = [
@@ -145,6 +157,18 @@ const ServicePalette: React.FC = () => {
 
   return (
     <>
+      {/* Floating Header */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-20 bg-white rounded-2xl shadow-lg border border-gray-200 px-6 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#ff9900] rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-800">AWS Architecture Designer</h1>
+        </div>
+      </div>
+
       {/* Minimized Icon Bar - visible when closed */}
       <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-16 max-h-[80vh] bg-white rounded-2xl flex flex-col gap-2 p-3 shadow-lg border border-gray-200 z-10 transition-all duration-300 ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
         {/* Toggle button in minimized bar */}
@@ -154,7 +178,7 @@ const ServicePalette: React.FC = () => {
           title="Open Panel"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
 
@@ -162,6 +186,10 @@ const ServicePalette: React.FC = () => {
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
           {filteredServices.slice(0, 8).map((service) => {
             const smallIcon = getSmallIcon(service);
+            const cleanName = service.name
+              .replace(/^(Arch|Res)\s+/i, '')
+              .replace(/\s+(Other)$/i, '')
+              .trim();
             return (
               <button
                 key={`mini-${service.id}`}
@@ -169,7 +197,7 @@ const ServicePalette: React.FC = () => {
                 draggable
                 onDragStart={(e) => handleDragStart(e, service)}
                 className="w-full aspect-square bg-gray-50 hover:bg-blue-50 rounded-lg transition-all flex items-center justify-center cursor-move border border-transparent hover:border-blue-300"
-                title={service.name}
+                title={cleanName || service.name}
               >
                 {smallIcon ? (
                   <img src={smallIcon} alt={service.name} className="w-8 h-8 object-contain" />
@@ -185,56 +213,49 @@ const ServicePalette: React.FC = () => {
       </div>
 
       {/* Full Sidebar Panel - visible when open */}
-      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 border border-gray-200 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
-        <div className="p-5 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-all"
-              title="Minimize Panel"
-            >
-              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="w-8 h-8 bg-[#ff9900] rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-gray-800 truncate">AWS Services</h2>
-          </div>
-        <div className="relative overflow-hidden group/search">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg className="w-4 h-4 text-gray-400 group-focus-within/search:text-[#ff9900] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
+        {/* Search header with AWS dark color */}
+        <div className="bg-[#232f3e] rounded-t-2xl px-5 py-5 flex-shrink-0 relative">
+          <div className="relative flex items-center gap-3 pr-10">
+            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search AWS services..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent border-none focus:outline-none text-base text-white placeholder:text-gray-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-gray-400 hover:text-white transition-all flex-shrink-0"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Search AWS services..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 text-sm text-gray-700 placeholder:text-gray-400 transition-all"
-          />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all"
-              aria-label="Clear search"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="mt-3 text-xs text-gray-400">
+              {filteredServices.length} result{filteredServices.length !== 1 ? 's' : ''} found
+            </div>
           )}
+          {/* Floating minimize button */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute top-4 right-4 w-9 h-9 hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900] rounded-lg flex items-center justify-center transition-all"
+            title="Minimize Panel"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
         </div>
-        {searchQuery && (
-          <div className="mt-2 text-xs text-gray-600 bg-blue-50 px-3 py-1.5 rounded-md">
-            {filteredServices.length} result{filteredServices.length !== 1 ? 's' : ''} found
-          </div>
-        )}
-      </div>
 
       <div className="flex overflow-x-auto border-b border-gray-200 px-5 py-3 gap-2 flex-shrink-0 scrollbar-thin bg-gray-50">
         {categories.map((cat) => {
@@ -289,23 +310,23 @@ const ServicePalette: React.FC = () => {
         ) : (
           <div className="flex flex-wrap gap-3 justify-between">
             {filteredServices.map((service) => {
-              const smallIcon = getSmallIcon(service); // Use 16px for sidebar
-              return (
-                <div
-                  key={`${service.id}-${service.category}`}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, service)}
-                  onClick={() => handleAddService(service)}
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-blue-500/20 hover:scale-105 cursor-move transition-all flex-shrink-0 group border border-transparent hover:border-blue-400/50"
-                  style={{ width: 'calc(33.333% - 8px)' }}
-                >
+                const smallIcon = getSmallIcon(service); // Use 16px for sidebar
+                return (
+                  <div
+                    key={`${service.id}-${service.category}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, service)}
+                    onClick={() => handleAddService(service)}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-blue-500/20 hover:scale-105 cursor-move transition-all flex-shrink-0 group border border-transparent hover:border-blue-400/50"
+                    style={{ width: 'calc(33.333% - 8px)' }}
+                  >
                   <div className="flex flex-col items-center gap-1">
                     {smallIcon ? (
                       <>
                         <img
                           src={smallIcon}
                           alt={service.name}
-                          className="w-14 h-14 object-contain"
+                          className="w-20 h-20 object-contain"
                           onError={(e) => {
                             // Fallback to placeholder if icon fails to load
                             e.currentTarget.style.display = 'none';
@@ -313,12 +334,12 @@ const ServicePalette: React.FC = () => {
                             if (fallback) fallback.style.display = 'flex';
                           }}
                         />
-                        <div className="w-14 h-14 bg-[#ff9900] rounded hidden items-center justify-center text-white font-bold text-sm">
+                        <div className="w-20 h-20 bg-[#ff9900] rounded hidden items-center justify-center text-white font-bold text-base">
                           {service.name.substring(0, 2).toUpperCase()}
                         </div>
                       </>
                     ) : (
-                      <div className="w-14 h-14 bg-[#ff9900] rounded flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-20 h-20 bg-[#ff9900] rounded flex items-center justify-center text-white font-bold text-base">
                         {service.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
