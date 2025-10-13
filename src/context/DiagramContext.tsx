@@ -4,6 +4,19 @@ import { addEdge, applyNodeChanges, applyEdgeChanges } from 'reactflow';
 import type { Node, Edge, Connection, NodeChange, EdgeChange } from 'reactflow';
 import type { DiagramDSL, AWSNode } from '../types/diagram';
 
+// Helper function to convert service to uniform ID format
+const getUniformServiceId = (serviceName: string, category: string): string => {
+  const prefix = serviceName.match(/^(Arch|Res)\s+/i)?.[1].toLowerCase() || 'arch';
+  const normalizedCategory = category.toLowerCase().replace(/\s+/g, '-');
+  const normalizedService = serviceName
+    .replace(/^(Arch|Res)\s+/i, '')
+    .replace(/\s+(Other)$/i, '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .trim();
+  return `${prefix}::${normalizedCategory}::${normalizedService}`;
+};
+
 interface DiagramContextType {
   nodes: Node[];
   edges: Edge[];
@@ -169,22 +182,33 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
     );
   }, []);
 
-  // Convert React Flow nodes/edges to DSL JSON
+  // Convert React Flow nodes/edges to minimal DSL JSON
   const updateDSL = useCallback(() => {
-    const dslNodes: AWSNode[] = nodes.map((node) => ({
-      id: node.id,
-      type: 'aws-service',
-      service: node.data.service || 'unknown',
-      category: node.data.category || 'Compute',
-      label: node.data.label || '',
-      position: node.position,
-      data: node.data,
-    }));
+    // Create node ID to index mapping for minimal edge references
+    const nodeIdToIndex = new Map<string, number>();
+    nodes.forEach((node, index) => {
+      nodeIdToIndex.set(node.id, index);
+    });
+
+    const dslNodes: AWSNode[] = nodes.map((node) => {
+      const serviceName = node.data.service || 'unknown';
+      const category = node.data.category || 'Compute';
+
+      return {
+        id: node.id,
+        type: 'aws-service',
+        service: getUniformServiceId(serviceName, category),
+        category: category,
+        label: node.data.label || '',
+        position: node.position,
+        data: node.data,
+      };
+    });
 
     const dslConnections = edges.map((edge) => ({
       id: edge.id,
-      source: edge.source,
-      target: edge.target,
+      source: nodeIdToIndex.get(edge.source) ?? edge.source,
+      target: nodeIdToIndex.get(edge.target) ?? edge.target,
       label: edge.label as string,
       animated: edge.animated,
     }));
@@ -202,29 +226,51 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
 
   // Load diagram from DSL JSON
   const loadFromDSL = useCallback((dslData: DiagramDSL) => {
-    const flowNodes: Node[] = dslData.nodes.map((node) => ({
-      id: node.id,
+    const flowNodes: Node[] = dslData.nodes.map((node, index) => ({
+      id: node.id || `node-${Date.now()}-${index}`,
       type: 'awsNode',
       position: node.position,
       data: {
         service: node.service,
-        category: node.category,
-        label: node.label,
+        category: node.category || 'Compute',
+        label: node.label || node.service,
         ...node.data,
       },
     }));
 
-    const flowEdges: Edge[] = dslData.connections.map((conn) => ({
-      id: conn.id,
-      source: conn.source,
-      target: conn.target,
-      label: conn.label,
-      animated: conn.animated,
-    }));
+    // Handle both index-based (0, 1, 2) and ID-based edge references
+    const flowEdges: Edge[] = (dslData.connections || []).map((conn) => {
+      const sourceId = typeof conn.source === 'number'
+        ? flowNodes[conn.source]?.id
+        : conn.source;
+      const targetId = typeof conn.target === 'number'
+        ? flowNodes[conn.target]?.id
+        : conn.target;
+
+      return {
+        id: conn.id || `edge-${sourceId}-${targetId}-${Date.now()}`,
+        source: sourceId as string,
+        target: targetId as string,
+        label: conn.label,
+        animated: conn.animated,
+        type: 'awsEdge',
+      };
+    });
 
     setNodes(flowNodes);
     setEdges(flowEdges);
-    setDSL(dslData);
+
+    // Ensure DSL has required structure even if minimal
+    setDSL({
+      version: dslData.version || '1.0',
+      metadata: dslData.metadata || {
+        title: 'Imported Diagram',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      nodes: dslData.nodes,
+      connections: dslData.connections || [],
+    });
   }, []);
 
   const exportDSL = useCallback(() => {

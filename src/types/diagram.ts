@@ -12,11 +12,11 @@ export type AWSServiceCategory =
   | 'Serverless';
 
 export interface AWSNode {
-  id: string;
-  type: 'aws-service';
-  service: string; // e.g., 'EC2', 'S3', 'RDS'
-  category: AWSServiceCategory;
-  label: string;
+  id?: string; // Optional for minimal JSON - will be auto-generated
+  type?: 'aws-service'; // Optional for minimal JSON
+  service: string; // e.g., 'arch::compute::amazon-ec2'
+  category?: AWSServiceCategory; // Optional - can be derived from service
+  label?: string; // Optional - will default to service name
   position: {
     x: number;
     y: number;
@@ -25,30 +25,31 @@ export interface AWSNode {
     instanceType?: string;
     region?: string;
     description?: string;
+    iconUrl?: string;
     [key: string]: any;
   };
 }
 
 export interface Connection {
-  id: string;
-  source: string;
-  target: string;
+  id?: string; // Optional for minimal JSON
+  source: string | number; // Support both node IDs and array indices
+  target: string | number; // Support both node IDs and array indices
   label?: string;
   type?: 'solid' | 'dashed' | 'dotted';
   animated?: boolean;
 }
 
 export interface DiagramDSL {
-  version: string;
-  metadata: {
-    title: string;
+  version?: string; // Optional for minimal JSON
+  metadata?: {
+    title?: string;
     description?: string;
     author?: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: string;
+    updatedAt?: string;
   };
   nodes: AWSNode[];
-  connections: Connection[];
+  connections?: Connection[]; // Optional - edges can be empty
 }
 
 // React Flow types

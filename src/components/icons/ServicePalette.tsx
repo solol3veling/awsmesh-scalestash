@@ -18,7 +18,21 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   const [isOpen, setIsOpen] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Convert service name to uniform format: arch::category::service-name
+  const getUniformServiceId = (service: any): string => {
+    const prefix = service.name.match(/^(Arch|Res)\s+/i)?.[1].toLowerCase() || 'arch';
+    const category = service.category.toLowerCase().replace(/\s+/g, '-');
+    const serviceName = service.name
+      .replace(/^(Arch|Res)\s+/i, '')
+      .replace(/\s+(Other)$/i, '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .trim();
+    return `${prefix}::${category}::${serviceName}`;
+  };
 
   const handleSaveAsPNG = () => {
     // TODO: Implement PNG export
@@ -27,22 +41,97 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   };
 
   const handleSaveAsJSON = () => {
-    // TODO: Get actual diagram data from context
+    // Minimal JSON format - only essential user-provided data
+    const sampleServices = filteredServices.slice(0, 3).map((service, index) => ({
+      service: getUniformServiceId(service),
+      position: { x: 100 + (index * 200), y: 100 },
+      label: service.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim()
+    }));
+
     const diagramData = {
-      nodes: [],
-      edges: [],
-      timestamp: new Date().toISOString()
+      nodes: sampleServices,
+      edges: [
+        // Minimal edge structure - indices reference nodes array
+        {
+          source: 0,
+          target: 1,
+          label: "connects to"
+        }
+      ]
     };
 
     const dataStr = JSON.stringify(diagramData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `diagram-${new Date().getTime()}.json`;
+    link.download = `aws-diagram-${new Date().getTime()}.json`;
     link.click();
     URL.revokeObjectURL(url);
     setShowShareDropdown(false);
+  };
+
+  const handleLoadJSON = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonData = JSON.parse(event.target?.result as string);
+
+          // Validate JSON structure
+          if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
+            alert('Invalid JSON: missing or invalid "nodes" array');
+            return;
+          }
+
+          // Process each node and auto-map icons
+          jsonData.nodes.forEach((node: any, index: number) => {
+            if (!node.service) {
+              console.warn(`Node at index ${index} is missing "service" field`);
+              return;
+            }
+
+            // Find matching service by searching for the service ID
+            const matchingService = services.find(s => {
+              const uniformId = getUniformServiceId(s);
+              return uniformId === node.service;
+            });
+
+            if (matchingService) {
+              const largeIcon = getLargeIcon(matchingService);
+              const newNode = {
+                id: `node-${Date.now()}-${index}`,
+                type: 'awsNode',
+                position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
+                data: {
+                  service: node.service,
+                  category: matchingService.category,
+                  label: node.label || matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim(),
+                  iconUrl: largeIcon,
+                },
+              };
+              addNode(newNode);
+            } else {
+              console.warn(`Could not find service for: ${node.service}`);
+              alert(`Service not found: ${node.service}\nPlease check the service ID format.`);
+            }
+          });
+
+          alert(`Successfully imported ${jsonData.nodes.length} node(s)!`);
+          setShowShareDropdown(false);
+        } catch (error) {
+          console.error('Error parsing JSON:', error);
+          alert('Error parsing JSON file. Please check the file format.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   };
 
   const handleCopyLink = () => {
@@ -297,6 +386,20 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
                 Save as JSON
               </button>
               <button
+                onClick={handleLoadJSON}
+                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-[#ff9900]/20 text-gray-300 hover:text-[#ff9900]'
+                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Load JSON
+              </button>
+              <div className={`h-px ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
+              <button
                 onClick={handleCopyLink}
                 className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
                   theme === 'dark'
@@ -336,6 +439,28 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
               : 'bg-gray-800 text-white'
           }`}>
             {showCodeEditor ? 'Hide' : 'Show'} Code Editor
+          </span>
+        </button>
+
+        {/* Info/Documentation button */}
+        <button
+          onClick={() => setShowInfoModal(true)}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title="Documentation"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            How to Use
           </span>
         </button>
 
@@ -632,6 +757,175 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
         )}
       </div>
     </div>
+
+      {/* Info/Documentation Modal */}
+      {showInfoModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowInfoModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`max-w-4xl w-full max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden ${
+              theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'
+            }`}
+          >
+            {/* Modal Header */}
+            <div className={`px-6 py-4 border-b flex items-center justify-between ${
+              theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                JSON Format Documentation
+              </h2>
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                    : 'hover:bg-gray-100 text-gray-600'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className={`p-6 overflow-y-auto max-h-[calc(90vh-120px)] ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              <div className="space-y-6">
+                {/* Introduction */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    About This Format
+                  </h3>
+                  <p className="text-sm leading-relaxed">
+                    Use this minimal JSON format to programmatically generate AWS architecture diagrams. The format only
+                    requires essential data - IDs, timestamps, and icons are automatically generated by the app. You can feed
+                    this structure to an AI or use it directly to create complex diagrams automatically.
+                  </p>
+                </div>
+
+                {/* Service ID Format */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Service Format
+                  </h3>
+                  <p className="text-sm mb-3">
+                    Each node requires a <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>service</code> field with this format:
+                  </p>
+                  <code className={`block px-4 py-2 rounded-lg text-sm ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-[#ff9900]'
+                      : 'bg-gray-100 text-blue-600'
+                  }`}>
+                    prefix::category::service-name
+                  </code>
+                  <p className="text-sm mt-2">
+                    Example: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>
+                      arch::compute::amazon-ec2
+                    </code>
+                  </p>
+                  <p className="text-xs mt-2 opacity-75">
+                    Icons are automatically mapped from the service ID - no need to specify them!
+                  </p>
+                </div>
+
+                {/* Available Services */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Available Services ({filteredServices.length} total)
+                  </h3>
+                  <div className={`max-h-48 overflow-y-auto rounded-lg border ${
+                    theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <div className="grid grid-cols-2 gap-2 p-4">
+                      {filteredServices.slice(0, 50).map((service) => (
+                        <code
+                          key={service.id}
+                          className={`text-xs p-2 rounded ${
+                            theme === 'dark'
+                              ? 'bg-[#1a252f] text-gray-300'
+                              : 'bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          {getUniformServiceId(service)}
+                        </code>
+                      ))}
+                      {filteredServices.length > 50 && (
+                        <p className="text-xs text-gray-500 col-span-2 text-center mt-2">
+                          ... and {filteredServices.length - 50} more services
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* JSON Example */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Minimal JSON Structure
+                  </h3>
+                  <pre className={`p-4 rounded-lg overflow-x-auto text-xs ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+{`{
+  "nodes": [
+    {
+      "service": "arch::compute::amazon-ec2",
+      "position": { "x": 100, "y": 100 },
+      "label": "Web Server"
+    },
+    {
+      "service": "arch::database::amazon-rds",
+      "position": { "x": 400, "y": 100 },
+      "label": "Database"
+    },
+    {
+      "service": "arch::storage::amazon-s3",
+      "position": { "x": 250, "y": 300 },
+      "label": "File Storage"
+    }
+  ],
+  "edges": [
+    {
+      "source": 0,
+      "target": 1,
+      "label": "connects to"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "label": "stores files"
+    }
+  ]
+}`}
+                  </pre>
+                </div>
+
+                {/* Usage Tips */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Usage Tips
+                  </h3>
+                  <ul className="text-sm space-y-2 list-disc list-inside">
+                    <li>Use the <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>service</code> field with IDs from the "Available Services" list</li>
+                    <li>Position coordinates (x, y) determine where nodes appear on the canvas</li>
+                    <li>Node IDs, timestamps, and icons are auto-generated - no need to include them</li>
+                    <li>Edge source and target use array indices (0, 1, 2...) to reference nodes</li>
+                    <li>Labels are optional but recommended for clarity (e.g., "Web Server", "Database")</li>
+                    <li>Feed this minimal JSON to an AI (like Claude or ChatGPT) to generate complex architectures</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
