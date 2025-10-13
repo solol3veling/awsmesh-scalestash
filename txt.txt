@@ -1,11 +1,12 @@
-- add grouping
+- add grouping (wip) (grouping by select and add color selection aswell for the highlight grouping, or creating a group and putting stuff in it automatically adds to the group, the group can also be treated as a node, only difference is it can be enlarged by selecting/dragging)
 - add aws groups
 - add export as png, json, pdf (with or without bg)
 - add share as link
-- add save as (use localstorage)
-- fix and do the recent on the search
 - add node direct
-- i want me adding json to render the design
 
 
-(add ai to json to render)
+
+- fix and do the recent on the search (not necessary)
+- add save as (use localstorage) (done)
+- i want me adding json to render the design (done)
+(add ai to json to render) (done)

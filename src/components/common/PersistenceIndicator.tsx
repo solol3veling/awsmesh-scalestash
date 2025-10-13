@@ -34,7 +34,7 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
 
   return (
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-30 rounded-full shadow-lg border transition-all ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-30 rounded-full shadow-lg border transition-all ${
         theme === 'dark'
           ? 'bg-[#232f3e] border-gray-700'
           : 'bg-white border-gray-200'

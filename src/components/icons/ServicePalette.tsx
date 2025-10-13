@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDiagram, FLOW_PATTERNS } from '../../context/DiagramContext';
 import { useIconsManifest } from '../../hooks/useIconsManifest';
 import { useTheme } from '../../context/ThemeContext';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 interface ServicePaletteProps {
   showCodeEditor: boolean;
@@ -9,7 +10,7 @@ interface ServicePaletteProps {
 }
 
 const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShowCodeEditor }) => {
-  const { addNode, loadFromDSL } = useDiagram();
+  const { addNode, loadFromDSL, nodes, setNodes, setEdges } = useDiagram();
   const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
   const { theme, toggleTheme } = useTheme();
 
@@ -20,6 +21,8 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingJSONData, setPendingJSONData] = useState<any>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -106,19 +109,39 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
       return;
     }
 
-    setIsGenerating(true);
-    setUploadProgress(0);
-
     try {
       const jsonData = JSON.parse(jsonText);
-      setUploadProgress(20);
 
       // Validate JSON structure
       if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
         alert('Invalid JSON: missing or invalid "nodes" array');
-        setIsGenerating(false);
         return;
       }
+
+      // Check if there's existing work
+      if (nodes.length > 0) {
+        setPendingJSONData(jsonData);
+        setShowConfirmModal(true);
+      } else {
+        // No existing work, proceed directly
+        await loadJSONData(jsonData);
+      }
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      alert('Error parsing JSON text. Please check the format.');
+    }
+  };
+
+  const loadJSONData = async (jsonData: any) => {
+    setIsGenerating(true);
+    setUploadProgress(0);
+
+    try {
+      setUploadProgress(20);
+
+      // Clear existing diagram
+      setNodes([]);
+      setEdges([]);
 
       setUploadProgress(50);
 
@@ -134,47 +157,37 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
       setShowUploadModal(false);
       setUploadProgress(0);
       setJsonText('');
+      setPendingJSONData(null);
     } catch (error) {
-      console.error('Error parsing JSON:', error);
-      alert('Error parsing JSON text. Please check the format.');
+      console.error('Error loading JSON:', error);
+      alert('Error loading JSON. Please try again.');
       setIsGenerating(false);
     }
   };
 
   const processJSONFile = async (file: File) => {
-    setIsGenerating(true);
-    setUploadProgress(0);
-
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
         const jsonData = JSON.parse(event.target?.result as string);
-        setUploadProgress(20);
 
         // Validate JSON structure
         if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
           alert('Invalid JSON: missing or invalid "nodes" array');
-          setIsGenerating(false);
           return;
         }
 
-        setUploadProgress(50);
-
-        // Use the existing loadFromDSL function with icon resolver
-        loadFromDSL(jsonData, resolveIconFromServiceId);
-
-        setUploadProgress(100);
-
-        // Wait a bit to show 100% before closing
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        setIsGenerating(false);
-        setShowUploadModal(false);
-        setUploadProgress(0);
+        // Check if there's existing work
+        if (nodes.length > 0) {
+          setPendingJSONData(jsonData);
+          setShowConfirmModal(true);
+        } else {
+          // No existing work, proceed directly
+          await loadJSONData(jsonData);
+        }
       } catch (error) {
         console.error('Error parsing JSON:', error);
         alert('Error parsing JSON file. Please check the file format.');
-        setIsGenerating(false);
       }
     };
     reader.readAsText(file);
@@ -1597,6 +1610,26 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        title="Replace Current Diagram?"
+        message={`You have ${nodes.length} node${nodes.length !== 1 ? 's' : ''} in your current diagram. Loading this JSON will clear your current progress and replace it with the uploaded diagram. This action cannot be undone.`}
+        confirmText="Replace Diagram"
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={async () => {
+          setShowConfirmModal(false);
+          if (pendingJSONData) {
+            await loadJSONData(pendingJSONData);
+          }
+        }}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setPendingJSONData(null);
+        }}
+      />
     </>
   );
 };
