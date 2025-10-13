@@ -19,7 +19,14 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   const [showAll, setShowAll] = useState(false);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [jsonText, setJsonText] = useState('');
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'text'>('file');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Convert service name to uniform format: arch::category::service-name
   const getUniformServiceId = (service: any): string => {
@@ -71,67 +78,213 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   };
 
   const handleLoadJSON = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.json';
-    input.onchange = (e: Event) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+    setShowShareDropdown(false);
+    setShowUploadModal(true);
+    setJsonText('');
+    setUploadMethod('file');
+  };
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const jsonData = JSON.parse(event.target?.result as string);
+  const handleProcessJSONText = async () => {
+    if (!jsonText.trim()) {
+      alert('Please paste JSON content');
+      return;
+    }
 
-          // Validate JSON structure
-          if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
-            alert('Invalid JSON: missing or invalid "nodes" array');
-            return;
+    setIsGenerating(true);
+    setUploadProgress(0);
+
+    try {
+      const jsonData = JSON.parse(jsonText);
+      setUploadProgress(20);
+
+      // Validate JSON structure
+      if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
+        alert('Invalid JSON: missing or invalid "nodes" array');
+        setIsGenerating(false);
+        return;
+      }
+
+      setUploadProgress(40);
+
+      // Process each node with progress updates
+      const totalNodes = jsonData.nodes.length;
+      let processedNodes = 0;
+
+      for (const [index, node] of jsonData.nodes.entries()) {
+        if (!node.service) {
+          console.warn(`Node at index ${index} is missing "service" field`);
+          continue;
+        }
+
+        // Find matching service by searching for the uniform service ID
+        const matchingService = services.find(s => {
+          const uniformId = getUniformServiceId(s);
+          return uniformId === node.service;
+        });
+
+        if (matchingService) {
+          const largeIcon = getLargeIcon(matchingService);
+          const cleanServiceName = matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim();
+
+          const newNode = {
+            // Use AI-provided ID if available, otherwise auto-generate
+            id: node.id || `node-${Date.now()}-${index}`,
+            type: 'awsNode',
+            position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
+            data: {
+              service: node.service,
+              category: matchingService.category, // Auto-generated from service
+              label: node.label || cleanServiceName, // Use AI label or default
+              iconUrl: largeIcon, // Auto-generated from service
+            },
+          };
+          addNode(newNode);
+          processedNodes++;
+
+          // Update progress
+          const nodeProgress = 40 + ((processedNodes / totalNodes) * 50);
+          setUploadProgress(nodeProgress);
+
+          // Small delay for visual feedback
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } else {
+          console.warn(`Could not find service for: ${node.service}`);
+        }
+      }
+
+      setUploadProgress(100);
+
+      // Wait a bit to show 100% before closing
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setIsGenerating(false);
+      setShowUploadModal(false);
+      setUploadProgress(0);
+      setJsonText('');
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      alert('Error parsing JSON text. Please check the format.');
+      setIsGenerating(false);
+    }
+  };
+
+  const processJSONFile = async (file: File) => {
+    setIsGenerating(true);
+    setUploadProgress(0);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonData = JSON.parse(event.target?.result as string);
+        setUploadProgress(20);
+
+        // Validate JSON structure
+        if (!jsonData.nodes || !Array.isArray(jsonData.nodes)) {
+          alert('Invalid JSON: missing or invalid "nodes" array');
+          setIsGenerating(false);
+          return;
+        }
+
+        setUploadProgress(40);
+
+        // Process each node with progress updates
+        const totalNodes = jsonData.nodes.length;
+        let processedNodes = 0;
+
+        for (const [index, node] of jsonData.nodes.entries()) {
+          if (!node.service) {
+            console.warn(`Node at index ${index} is missing "service" field`);
+            continue;
           }
 
-          // Process each node and auto-map icons
-          jsonData.nodes.forEach((node: any, index: number) => {
-            if (!node.service) {
-              console.warn(`Node at index ${index} is missing "service" field`);
-              return;
-            }
-
-            // Find matching service by searching for the service ID
-            const matchingService = services.find(s => {
-              const uniformId = getUniformServiceId(s);
-              return uniformId === node.service;
-            });
-
-            if (matchingService) {
-              const largeIcon = getLargeIcon(matchingService);
-              const newNode = {
-                id: `node-${Date.now()}-${index}`,
-                type: 'awsNode',
-                position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
-                data: {
-                  service: node.service,
-                  category: matchingService.category,
-                  label: node.label || matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim(),
-                  iconUrl: largeIcon,
-                },
-              };
-              addNode(newNode);
-            } else {
-              console.warn(`Could not find service for: ${node.service}`);
-              alert(`Service not found: ${node.service}\nPlease check the service ID format.`);
-            }
+          // Find matching service by searching for the uniform service ID
+          const matchingService = services.find(s => {
+            const uniformId = getUniformServiceId(s);
+            return uniformId === node.service;
           });
 
-          alert(`Successfully imported ${jsonData.nodes.length} node(s)!`);
-          setShowShareDropdown(false);
-        } catch (error) {
-          console.error('Error parsing JSON:', error);
-          alert('Error parsing JSON file. Please check the file format.');
+          if (matchingService) {
+            const largeIcon = getLargeIcon(matchingService);
+            const cleanServiceName = matchingService.name.replace(/^(Arch|Res)\s+/i, '').replace(/\s+(Other)$/i, '').trim();
+
+            const newNode = {
+              // Use AI-provided ID if available, otherwise auto-generate
+              id: node.id || `node-${Date.now()}-${index}`,
+              type: 'awsNode',
+              position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
+              data: {
+                service: node.service,
+                category: matchingService.category, // Auto-generated from service
+                label: node.label || cleanServiceName, // Use AI label or default
+                iconUrl: largeIcon, // Auto-generated from service
+              },
+            };
+            addNode(newNode);
+            processedNodes++;
+
+            // Update progress
+            const nodeProgress = 40 + ((processedNodes / totalNodes) * 50);
+            setUploadProgress(nodeProgress);
+
+            // Small delay for visual feedback
+            await new Promise(resolve => setTimeout(resolve, 50));
+          } else {
+            console.warn(`Could not find service for: ${node.service}`);
+          }
         }
-      };
-      reader.readAsText(file);
+
+        setUploadProgress(100);
+
+        // Wait a bit to show 100% before closing
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        setIsGenerating(false);
+        setShowUploadModal(false);
+        setUploadProgress(0);
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        alert('Error parsing JSON file. Please check the file format.');
+        setIsGenerating(false);
+      }
     };
-    input.click();
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/json') {
+      processJSONFile(file);
+    } else {
+      alert('Please upload a valid JSON file');
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processJSONFile(file);
+    }
   };
 
   const handleCopyLink = () => {
@@ -145,6 +298,120 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
 
   const handleToggleCodeEditor = () => {
     setShowCodeEditor(!showCodeEditor);
+  };
+
+  const handleDownloadReadme = () => {
+    // Generate comprehensive README content
+    const readmeContent = `# AWS Architecture Diagram JSON Format
+
+## About This Format
+
+Use this minimal JSON format to programmatically generate AWS architecture diagrams. The format only requires essential data - IDs, timestamps, and icons are automatically generated by the app. You can feed this structure to an AI or use it directly to create complex diagrams automatically.
+
+## Service Format
+
+Each node requires a \`service\` field with this format:
+
+\`\`\`
+prefix::category::service-name
+\`\`\`
+
+**Example:** \`arch::compute::amazon-ec2\`
+
+Icons are automatically mapped from the service ID - no need to specify them!
+
+## Available Services
+
+${services
+  .filter(s => s.sizes[64])
+  .map(service => `- ${getUniformServiceId(service)}`)
+  .join('\n')}
+
+## AI-Friendly JSON Format
+
+### What AI Provides:
+- Node IDs (must be unique across entire diagram)
+- Service IDs (from available services list above)
+- Positions (x, y coordinates)
+- Labels (descriptive names)
+- Edge IDs
+- Edge connections (source and target node IDs)
+
+### What App Auto-Generates:
+- Icons (automatically from service ID)
+- Categories (automatically from service ID)
+- Types (automatically from service ID)
+
+### Example JSON:
+
+\`\`\`json
+{
+  "nodes": [
+    {
+      "id": "web-server",
+      "service": "arch::compute::amazon-ec2",
+      "position": { "x": 100, "y": 100 },
+      "label": "Web Server"
+    },
+    {
+      "id": "database",
+      "service": "arch::database::amazon-rds",
+      "position": { "x": 400, "y": 100 },
+      "label": "Database"
+    },
+    {
+      "id": "storage",
+      "service": "arch::storage::amazon-s3",
+      "position": { "x": 250, "y": 300 },
+      "label": "File Storage"
+    }
+  ],
+  "edges": [
+    {
+      "id": "conn-1",
+      "source": "web-server",
+      "target": "database",
+      "label": "queries"
+    },
+    {
+      "id": "conn-2",
+      "source": "web-server",
+      "target": "storage",
+      "label": "stores files"
+    }
+  ]
+}
+\`\`\`
+
+## Usage Tips for AI Generation
+
+- **IMPORTANT:** Node IDs must be unique across the entire diagram
+- Use descriptive, unique node IDs (e.g., "web-server", "primary-database", "cache-1") for easier edge connections
+- Edge \`source\` and \`target\` must reference existing node IDs
+- Position coordinates should be calculated neatly based on architecture flow
+- Labels are optional but recommended for context (e.g., "Web Server", "Primary DB")
+- Feed this format to an AI (like Claude or ChatGPT) with a prompt describing the architecture
+
+## Example Prompt for AI
+
+"Generate an AWS architecture diagram JSON for a three-tier web application with:
+- EC2 web servers behind a load balancer
+- RDS database for persistence
+- S3 for static file storage
+- CloudFront for CDN
+- ElastiCache for caching
+
+Use the JSON format from the documentation. Position the services in a logical flow from left to right."
+`;
+
+    // Create and download the file
+    const blob = new Blob([readmeContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'AWS-Architecture-JSON-Format-README.md';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   // Focus search input when sidebar opens
@@ -317,6 +584,31 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
           ? 'bg-[#232f3e] border-gray-700'
           : 'bg-white border-gray-200'
       }`}>
+        {/* Info/Documentation button - FIRST */}
+        <button
+          onClick={() => setShowInfoModal(true)}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title="Documentation"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            How to Use
+          </span>
+        </button>
+
+        {/* Divider */}
+        <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />
+
         {/* Share button with dropdown */}
         <div className="relative">
           <button
@@ -439,28 +731,6 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
               : 'bg-gray-800 text-white'
           }`}>
             {showCodeEditor ? 'Hide' : 'Show'} Code Editor
-          </span>
-        </button>
-
-        {/* Info/Documentation button */}
-        <button
-          onClick={() => setShowInfoModal(true)}
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
-            theme === 'dark'
-              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
-              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
-          }`}
-          title="Documentation"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
-            theme === 'dark'
-              ? 'bg-[#1a252f] text-gray-300'
-              : 'bg-gray-800 text-white'
-          }`}>
-            How to Use
           </span>
         </button>
 
@@ -758,6 +1028,180 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
       </div>
     </div>
 
+      {/* JSON Upload Modal */}
+      {showUploadModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={() => !isGenerating && setShowUploadModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden ${
+              theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'
+            }`}
+          >
+            {/* Modal Header */}
+            <div className={`px-6 py-4 border-b flex items-center justify-between ${
+              theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+            }`}>
+              <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                {isGenerating ? 'Generating Design...' : 'Upload Architecture JSON'}
+              </h2>
+              {!isGenerating && (
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    theme === 'dark'
+                      ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                      : 'hover:bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {!isGenerating ? (
+                <>
+                  {/* Drag and Drop Area */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                      dragActive
+                        ? theme === 'dark'
+                          ? 'border-[#ff9900] bg-[#ff9900]/10'
+                          : 'border-blue-500 bg-blue-50'
+                        : theme === 'dark'
+                          ? 'border-gray-600 hover:border-[#ff9900]/50 hover:bg-[#1a252f]'
+                          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                    }`}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <svg
+                      className={`w-16 h-16 mx-auto mb-4 ${
+                        dragActive
+                          ? theme === 'dark'
+                            ? 'text-[#ff9900]'
+                            : 'text-blue-500'
+                          : theme === 'dark'
+                            ? 'text-gray-500'
+                            : 'text-gray-400'
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                      {dragActive ? 'Drop your JSON file here' : 'Drag & drop your JSON file'}
+                    </p>
+                    <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      or click to browse
+                    </p>
+                    <button
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                        theme === 'dark'
+                          ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      }`}
+                    >
+                      Select JSON File
+                    </button>
+                  </div>
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+
+                  {/* Info Text */}
+                  <p className={`text-xs mt-4 text-center ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Upload a JSON file following the AI-friendly format with nodes and edges
+                  </p>
+                </>
+              ) : (
+                <>
+                  {/* Progress Indicator */}
+                  <div className="space-y-4">
+                    {/* Animated Icon */}
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <svg
+                          className={`w-20 h-20 ${theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className={`w-24 h-24 border-4 border-t-transparent rounded-full animate-spin ${
+                            theme === 'dark' ? 'border-[#ff9900]' : 'border-blue-600'
+                          }`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Text */}
+                    <div className="text-center">
+                      <p className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                        Creating your architecture...
+                      </p>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {uploadProgress < 40 && 'Reading JSON file...'}
+                        {uploadProgress >= 40 && uploadProgress < 90 && 'Generating services and connections...'}
+                        {uploadProgress >= 90 && 'Finalizing design...'}
+                      </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className={`w-full h-2 rounded-full overflow-hidden ${
+                      theme === 'dark' ? 'bg-[#1a252f]' : 'bg-gray-200'
+                    }`}>
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          theme === 'dark' ? 'bg-[#ff9900]' : 'bg-blue-600'
+                        }`}
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+
+                    {/* Percentage */}
+                    <p className={`text-center text-sm font-medium ${
+                      theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'
+                    }`}>
+                      {Math.round(uploadProgress)}%
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Info/Documentation Modal */}
       {showInfoModal && (
         <div
@@ -777,18 +1221,38 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
               <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                 JSON Format Documentation
               </h2>
-              <button
-                onClick={() => setShowInfoModal(false)}
-                className={`p-2 rounded-lg transition-colors ${
-                  theme === 'dark'
-                    ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
-                    : 'hover:bg-gray-100 text-gray-600'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Download README button */}
+                <button
+                  onClick={handleDownloadReadme}
+                  className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                    theme === 'dark'
+                      ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                  title="Download README file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span className="text-sm font-medium">Download README</span>
+                </button>
+
+                {/* Close button */}
+                <button
+                  onClick={() => setShowInfoModal(false)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    theme === 'dark'
+                      ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                      : 'hover:bg-gray-100 text-gray-600'
+                  }`}
+                  title="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -836,29 +1300,29 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
                 {/* Available Services */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Available Services ({filteredServices.length} total)
+                    Available Services ({services.length} total)
                   </h3>
-                  <div className={`max-h-48 overflow-y-auto rounded-lg border ${
+                  <p className="text-xs mb-3 opacity-75">
+                    All available AWS services with their uniform IDs. Use these in your JSON.
+                  </p>
+                  <div className={`max-h-64 overflow-y-auto rounded-lg border ${
                     theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
                   }`}>
-                    <div className="grid grid-cols-2 gap-2 p-4">
-                      {filteredServices.slice(0, 50).map((service) => (
-                        <code
-                          key={service.id}
-                          className={`text-xs p-2 rounded ${
-                            theme === 'dark'
-                              ? 'bg-[#1a252f] text-gray-300'
-                              : 'bg-gray-50 text-gray-700'
-                          }`}
-                        >
-                          {getUniformServiceId(service)}
-                        </code>
-                      ))}
-                      {filteredServices.length > 50 && (
-                        <p className="text-xs text-gray-500 col-span-2 text-center mt-2">
-                          ... and {filteredServices.length - 50} more services
-                        </p>
-                      )}
+                    <div className="grid grid-cols-1 gap-1 p-3">
+                      {services
+                        .filter(s => s.sizes[64]) // Only services with proper icons
+                        .map((service) => (
+                          <code
+                            key={service.id}
+                            className={`text-xs p-2 rounded font-mono ${
+                              theme === 'dark'
+                                ? 'bg-[#1a252f] text-gray-300 hover:bg-[#ff9900]/20'
+                                : 'bg-gray-50 text-gray-700 hover:bg-blue-50'
+                            }`}
+                          >
+                            {getUniformServiceId(service)}
+                          </code>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -866,8 +1330,12 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
                 {/* JSON Example */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Minimal JSON Structure
+                    AI-Friendly JSON Format
                   </h3>
+                  <p className="text-xs mb-3 opacity-75">
+                    AI provides: node IDs, service types, positions, labels, and edge connections.
+                    App auto-generates: icons, categories, and types.
+                  </p>
                   <pre className={`p-4 rounded-lg overflow-x-auto text-xs ${
                     theme === 'dark'
                       ? 'bg-[#1a252f] text-gray-300'
@@ -876,16 +1344,19 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
 {`{
   "nodes": [
     {
+      "id": "web-server",
       "service": "arch::compute::amazon-ec2",
       "position": { "x": 100, "y": 100 },
       "label": "Web Server"
     },
     {
+      "id": "database",
       "service": "arch::database::amazon-rds",
       "position": { "x": 400, "y": 100 },
       "label": "Database"
     },
     {
+      "id": "storage",
       "service": "arch::storage::amazon-s3",
       "position": { "x": 250, "y": 300 },
       "label": "File Storage"
@@ -893,13 +1364,15 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
   ],
   "edges": [
     {
-      "source": 0,
-      "target": 1,
-      "label": "connects to"
+      "id": "conn-1",
+      "source": "web-server",
+      "target": "database",
+      "label": "queries"
     },
     {
-      "source": 0,
-      "target": 2,
+      "id": "conn-2",
+      "source": "web-server",
+      "target": "storage",
       "label": "stores files"
     }
   ]
@@ -910,15 +1383,17 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
                 {/* Usage Tips */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Usage Tips
+                    Usage Tips for AI Generation
                   </h3>
                   <ul className="text-sm space-y-2 list-disc list-inside">
-                    <li>Use the <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>service</code> field with IDs from the "Available Services" list</li>
-                    <li>Position coordinates (x, y) determine where nodes appear on the canvas</li>
-                    <li>Node IDs, timestamps, and icons are auto-generated - no need to include them</li>
-                    <li>Edge source and target use array indices (0, 1, 2...) to reference nodes</li>
-                    <li>Labels are optional but recommended for clarity (e.g., "Web Server", "Database")</li>
-                    <li>Feed this minimal JSON to an AI (like Claude or ChatGPT) to generate complex architectures</li>
+                    <li><strong>AI provides:</strong> node IDs, service IDs, positions (x, y), labels, edge IDs, and connections</li>
+                    <li><strong>App generates:</strong> icons, categories, types - automatically from service ID</li>
+                    <li><strong className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>IMPORTANT:</strong> Node IDs must be unique across the entire diagram</li>
+                    <li>Use descriptive, unique node IDs (e.g., "web-server", "primary-database", "cache-1") for easier edge connections</li>
+                    <li>Edge <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>source</code> and <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>target</code> must reference existing node IDs</li>
+                    <li>Position coordinates should be calculated neatly based on architecture flow</li>
+                    <li>Labels are optional but recommended for context (e.g., "Web Server", "Primary DB")</li>
+                    <li>Feed this format to an AI (like Claude or ChatGPT) with a prompt describing the architecture</li>
                   </ul>
                 </div>
               </div>
