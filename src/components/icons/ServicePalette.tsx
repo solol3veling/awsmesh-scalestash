@@ -3,7 +3,12 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useIconsManifest } from '../../hooks/useIconsManifest';
 import { useTheme } from '../../context/ThemeContext';
 
-const ServicePalette: React.FC = () => {
+interface ServicePaletteProps {
+  showCodeEditor: boolean;
+  setShowCodeEditor: (show: boolean) => void;
+}
+
+const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShowCodeEditor }) => {
   const { addNode } = useDiagram();
   const { services, categories, loading, error, getServicesByCategory, searchServices, getSmallIcon, getLargeIcon } = useIconsManifest();
   const { theme, toggleTheme } = useTheme();
@@ -12,7 +17,46 @@ const ServicePalette: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [showShareDropdown, setShowShareDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveAsPNG = () => {
+    // TODO: Implement PNG export
+    alert('Save as PNG - Feature coming soon!');
+    setShowShareDropdown(false);
+  };
+
+  const handleSaveAsJSON = () => {
+    // TODO: Get actual diagram data from context
+    const diagramData = {
+      nodes: [],
+      edges: [],
+      timestamp: new Date().toISOString()
+    };
+
+    const dataStr = JSON.stringify(diagramData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `diagram-${new Date().getTime()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setShowShareDropdown(false);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      alert('Link copied to clipboard!');
+    }).catch(() => {
+      alert('Failed to copy link');
+    });
+    setShowShareDropdown(false);
+  };
+
+  const handleToggleCodeEditor = () => {
+    setShowCodeEditor(!showCodeEditor);
+  };
 
   // Focus search input when sidebar opens
   useEffect(() => {
@@ -23,6 +67,15 @@ const ServicePalette: React.FC = () => {
       }, 100);
     }
   }, [isOpen]);
+
+  // Close share dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowShareDropdown(false);
+    if (showShareDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showShareDropdown]);
 
   // Popular AWS services to show by default (20 most commonly used)
   const popularServices = [
@@ -175,33 +228,102 @@ const ServicePalette: React.FC = () => {
           ? 'bg-[#232f3e] border-gray-700'
           : 'bg-white border-gray-200'
       }`}>
-        {/* Share button */}
-        <button
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
-            theme === 'dark'
-              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
-              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
-          }`}
-          title="Share"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
-            theme === 'dark'
-              ? 'bg-[#1a252f] text-gray-300'
-              : 'bg-gray-800 text-white'
-          }`}>
-            Share
-          </span>
-        </button>
+        {/* Share button with dropdown */}
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowShareDropdown(!showShareDropdown);
+            }}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+              showShareDropdown
+                ? theme === 'dark'
+                  ? 'bg-[#ff9900]/20 text-[#ff9900]'
+                  : 'bg-blue-100 text-blue-600'
+                : theme === 'dark'
+                  ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+            }`}
+            title="Share"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            {!showShareDropdown && (
+              <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+                theme === 'dark'
+                  ? 'bg-[#1a252f] text-gray-300'
+                  : 'bg-gray-800 text-white'
+              }`}>
+                Share
+              </span>
+            )}
+          </button>
+
+          {/* Share Dropdown */}
+          {showShareDropdown && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`absolute top-full mt-2 right-0 rounded-lg shadow-lg border min-w-[160px] overflow-hidden z-50 ${
+                theme === 'dark'
+                  ? 'bg-[#232f3e] border-gray-700'
+                  : 'bg-white border-gray-200'
+              }`}
+            >
+              <button
+                onClick={handleSaveAsPNG}
+                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-[#ff9900]/20 text-gray-300 hover:text-[#ff9900]'
+                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Save as PNG
+              </button>
+              <button
+                onClick={handleSaveAsJSON}
+                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-[#ff9900]/20 text-gray-300 hover:text-[#ff9900]'
+                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Save as JSON
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-[#ff9900]/20 text-gray-300 hover:text-[#ff9900]'
+                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Copy Link
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Code Editor button */}
         <button
+          onClick={handleToggleCodeEditor}
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
-            theme === 'dark'
-              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
-              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+            showCodeEditor
+              ? theme === 'dark'
+                ? 'bg-[#ff9900]/20 text-[#ff9900]'
+                : 'bg-blue-100 text-blue-600'
+              : theme === 'dark'
+                ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
           }`}
           title="Code Editor"
         >
@@ -213,7 +335,7 @@ const ServicePalette: React.FC = () => {
               ? 'bg-[#1a252f] text-gray-300'
               : 'bg-gray-800 text-white'
           }`}>
-            Code Editor
+            {showCodeEditor ? 'Hide' : 'Show'} Code Editor
           </span>
         </button>
 
