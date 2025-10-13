@@ -81,7 +81,7 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
     setShowShareDropdown(false);
     setShowUploadModal(true);
     setJsonText('');
-    setUploadMethod('file');
+    setUploadMethod('text'); // Default to paste JSON
   };
 
   const handleProcessJSONText = async () => {
@@ -609,6 +609,31 @@ Use the JSON format from the documentation. Position the services in a logical f
         {/* Divider */}
         <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />
 
+        {/* Upload JSON button */}
+        <button
+          onClick={handleLoadJSON}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative group ${
+            theme === 'dark'
+              ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
+          }`}
+          title="Upload JSON"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${
+            theme === 'dark'
+              ? 'bg-[#1a252f] text-gray-300'
+              : 'bg-gray-800 text-white'
+          }`}>
+            Upload JSON
+          </span>
+        </button>
+
+        {/* Divider */}
+        <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />
+
         {/* Share button with dropdown */}
         <div className="relative">
           <button
@@ -676,19 +701,6 @@ Use the JSON format from the documentation. Position the services in a logical f
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
                 Save as JSON
-              </button>
-              <button
-                onClick={handleLoadJSON}
-                className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
-                  theme === 'dark'
-                    ? 'hover:bg-[#ff9900]/20 text-gray-300 hover:text-[#ff9900]'
-                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Load JSON
               </button>
               <div className={`h-px ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`} />
               <button
@@ -1067,74 +1079,148 @@ Use the JSON format from the documentation. Position the services in a logical f
             <div className="p-6">
               {!isGenerating ? (
                 <>
-                  {/* Drag and Drop Area */}
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-                      dragActive
-                        ? theme === 'dark'
-                          ? 'border-[#ff9900] bg-[#ff9900]/10'
-                          : 'border-blue-500 bg-blue-50'
-                        : theme === 'dark'
-                          ? 'border-gray-600 hover:border-[#ff9900]/50 hover:bg-[#1a252f]'
-                          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-                    }`}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <svg
-                      className={`w-16 h-16 mx-auto mb-4 ${
-                        dragActive
-                          ? theme === 'dark'
-                            ? 'text-[#ff9900]'
-                            : 'text-blue-500'
-                          : theme === 'dark'
-                            ? 'text-gray-500'
-                            : 'text-gray-400'
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                      {dragActive ? 'Drop your JSON file here' : 'Drag & drop your JSON file'}
-                    </p>
-                    <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      or click to browse
-                    </p>
+                  {/* Tab Buttons */}
+                  <div className={`flex gap-2 mb-4 p-1 rounded-lg ${
+                    theme === 'dark' ? 'bg-[#1a252f]' : 'bg-gray-100'
+                  }`}>
                     <button
-                      className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                        theme === 'dark'
-                          ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      onClick={() => setUploadMethod('text')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        uploadMethod === 'text'
+                          ? theme === 'dark'
+                            ? 'bg-[#ff9900] text-white'
+                            : 'bg-blue-600 text-white'
+                          : theme === 'dark'
+                            ? 'text-gray-400 hover:text-gray-300'
+                            : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      Select JSON File
+                      Paste JSON
+                    </button>
+                    <button
+                      onClick={() => setUploadMethod('file')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        uploadMethod === 'file'
+                          ? theme === 'dark'
+                            ? 'bg-[#ff9900] text-white'
+                            : 'bg-blue-600 text-white'
+                          : theme === 'dark'
+                            ? 'text-gray-400 hover:text-gray-300'
+                            : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      Upload File
                     </button>
                   </div>
 
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/json,.json"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  {uploadMethod === 'text' ? (
+                    <>
+                      {/* Text Input Area */}
+                      <div className="space-y-4">
+                        <textarea
+                          value={jsonText}
+                          onChange={(e) => setJsonText(e.target.value)}
+                          placeholder={`Paste your JSON here...\n\nExample:\n{\n  "nodes": [\n    {\n      "id": "web-server",\n      "service": "arch::compute::amazon-ec2",\n      "position": { "x": 100, "y": 100 },\n      "label": "Web Server"\n    }\n  ],\n  "edges": []\n}`}
+                          className={`w-full h-64 p-4 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 ${
+                            theme === 'dark'
+                              ? 'bg-[#1a252f] text-gray-300 border border-gray-700 focus:ring-[#ff9900] placeholder:text-gray-600'
+                              : 'bg-white text-gray-800 border border-gray-300 focus:ring-blue-500 placeholder:text-gray-400'
+                          }`}
+                        />
+                        <button
+                          onClick={handleProcessJSONText}
+                          disabled={!jsonText.trim()}
+                          className={`w-full px-6 py-3 rounded-lg font-medium transition-all ${
+                            jsonText.trim()
+                              ? theme === 'dark'
+                                ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              : theme === 'dark'
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
+                        >
+                          Generate Diagram
+                        </button>
+                      </div>
 
-                  {/* Info Text */}
-                  <p className={`text-xs mt-4 text-center ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Upload a JSON file following the AI-friendly format with nodes and edges
-                  </p>
+                      {/* Info Text */}
+                      <p className={`text-xs mt-4 text-center ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                        Paste JSON content following the AI-friendly format with nodes and edges
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {/* Drag and Drop Area */}
+                      <div
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                          dragActive
+                            ? theme === 'dark'
+                              ? 'border-[#ff9900] bg-[#ff9900]/10'
+                              : 'border-blue-500 bg-blue-50'
+                            : theme === 'dark'
+                              ? 'border-gray-600 hover:border-[#ff9900]/50 hover:bg-[#1a252f]'
+                              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                        }`}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <svg
+                          className={`w-16 h-16 mx-auto mb-4 ${
+                            dragActive
+                              ? theme === 'dark'
+                                ? 'text-[#ff9900]'
+                                : 'text-blue-500'
+                              : theme === 'dark'
+                                ? 'text-gray-500'
+                                : 'text-gray-400'
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                          {dragActive ? 'Drop your JSON file here' : 'Drag & drop your JSON file'}
+                        </p>
+                        <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          or click to browse
+                        </p>
+                        <button
+                          className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            theme === 'dark'
+                              ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                        >
+                          Select JSON File
+                        </button>
+                      </div>
+
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+
+                      {/* Info Text */}
+                      <p className={`text-xs mt-4 text-center ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                        Upload a JSON file following the AI-friendly format with nodes and edges
+                      </p>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
