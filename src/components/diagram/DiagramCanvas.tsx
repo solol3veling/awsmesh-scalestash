@@ -76,6 +76,16 @@ const DiagramCanvas: React.FC = () => {
           height: 8,
           color: '#94a3b8',
         },
+        labelStyle: {
+          cursor: 'move',
+        },
+        labelBgPadding: [8, 4],
+        labelBgBorderRadius: 4,
+        labelBgStyle: {
+          fill: '#ffffff',
+          fillOpacity: 0.9,
+        },
+        interactionWidth: 20,
         data: {
           ...edge.data,
           onDelete: removeEdge,
@@ -151,8 +161,8 @@ const DiagramCanvas: React.FC = () => {
         }}
         fitView
         className="bg-gray-50"
-        minZoom={0.1}
-        maxZoom={4}
+        minZoom={0.3}
+        maxZoom={5}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={[[-2000, -2000], [4000, 4000]]}
         defaultEdgeOptions={{

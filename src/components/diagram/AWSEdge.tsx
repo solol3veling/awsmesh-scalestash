@@ -108,29 +108,44 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
       />
 
       <EdgeLabelRenderer>
-        {/* Options bubble on hover/select */}
+        {/* Options bubble on hover/select - positioned to not overlap with label */}
         {(isHovered || selected) && !isEditingLabel && (
           <div
             style={{
               position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 20}px)`,
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 30}px)`,
               pointerEvents: 'all',
             }}
           >
-            <OptionsBubble
-              onDelete={handleDelete}
-              showLock={false}
-            />
+            <button
+              onClick={handleDelete}
+              className="bg-white hover:bg-red-50 text-red-600 rounded-full shadow-md border border-gray-200 hover:border-red-300 transition-all"
+              style={{
+                width: '20px',
+                height: '20px',
+                padding: '0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+              }}
+              title="Delete connection"
+            >
+              ×
+            </button>
           </div>
         )}
 
-        {/* Label or input */}
+        {/* Label or input - made draggable */}
         <div
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
+            cursor: isEditingLabel ? 'text' : 'move',
           }}
+          className="nodrag"
+          draggable={!isEditingLabel && !!label}
           onDoubleClick={handleAddLabel}
           onContextMenu={handleContextMenu}
           onMouseEnter={() => setIsHovered(true)}
@@ -158,7 +173,7 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
             />
           ) : label ? (
             <div
-              className="text-center cursor-pointer whitespace-nowrap"
+              className="text-center cursor-move whitespace-nowrap"
               style={{
                 fontSize: '8px',
                 padding: '1px 4px',

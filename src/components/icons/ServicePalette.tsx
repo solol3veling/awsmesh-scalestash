@@ -160,16 +160,11 @@ const ServicePalette: React.FC = () => {
 
   return (
     <>
-      {/* Floating Header */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-20 bg-white rounded-2xl shadow-lg border border-gray-200 px-6 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#ff9900] rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">AWS Architecture Designer</h1>
-        </div>
+      {/* AWS Logo - top left */}
+      <div className="fixed top-6 left-6 z-20 w-12 h-12 bg-[#ff9900] rounded-lg flex items-center justify-center shadow-lg">
+        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
       </div>
 
       {/* Minimized Icon Bar - visible when closed */}
