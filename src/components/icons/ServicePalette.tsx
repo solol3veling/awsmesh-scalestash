@@ -9,6 +9,7 @@ const ServicePalette: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(true);
+  const [showAll, setShowAll] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Focus search input when sidebar opens
@@ -73,9 +74,9 @@ const ServicePalette: React.FC = () => {
 
     const allServices = Array.from(uniqueServices.values());
 
-    // If not searching and category is 'All', only show popular services
+    // If not searching and category is 'All', limit to 21 services unless showAll is true
     if (!searchQuery.trim() && selectedCategory === 'All') {
-      return allServices.filter(service => {
+      const popularFiltered = allServices.filter(service => {
         const cleanName = service.name
           .replace(/^(Arch|Res)\s+/i, '')
           .replace(/\s+(Other)$/i, '')
@@ -86,11 +87,13 @@ const ServicePalette: React.FC = () => {
           cleanName.toLowerCase().includes(popular.toLowerCase()) ||
           popular.toLowerCase().includes(cleanName.toLowerCase())
         );
-      }).slice(0, 20); // Limit to 20 services
+      });
+
+      return showAll ? popularFiltered : popularFiltered.slice(0, 21);
     }
 
     return allServices;
-  }, [selectedCategory, searchQuery, services]);
+  }, [selectedCategory, searchQuery, services, showAll]);
 
   const getCategoryCount = (category: string) => {
     // Count only services with 64px icons, excluding duplicates
@@ -215,7 +218,7 @@ const ServicePalette: React.FC = () => {
       {/* Full Sidebar Panel - visible when open */}
       <div className={`fixed left-6 top-1/2 -translate-y-1/2 w-[380px] max-h-[85vh] bg-white rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all duration-300 z-10 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'}`}>
         {/* Search header with AWS dark color */}
-        <div className="bg-[#232f3e] rounded-t-2xl px-5 py-5 flex-shrink-0 relative">
+        <div className="bg-[#232f3e] rounded-t-2xl px-5 py-7 flex-shrink-0 relative">
           <div className="relative flex items-center gap-3 pr-10">
             <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -248,7 +251,7 @@ const ServicePalette: React.FC = () => {
           {/* Floating minimize button */}
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 w-9 h-9 hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900] rounded-lg flex items-center justify-center transition-all"
+            className="absolute top-5 right-4 w-9 h-9 hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900] rounded-lg flex items-center justify-center transition-all"
             title="Minimize Panel"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -258,25 +261,28 @@ const ServicePalette: React.FC = () => {
         </div>
 
       <div className="flex overflow-x-auto border-b border-gray-200 px-5 py-3 gap-2 flex-shrink-0 scrollbar-thin bg-gray-50">
-        {categories.map((cat) => {
-          const count = getCategoryCount(cat);
-          return (
-            <button
-              key={cat}
-              onClick={() => {
-                setSelectedCategory(cat);
-                setSearchQuery(''); // Clear search when changing category
-              }}
-              className={`px-3 py-1.5 text-[11px] rounded-lg whitespace-nowrap flex-shrink-0 transition-all ${
-                selectedCategory === cat
-                  ? 'bg-blue-500 text-white font-semibold shadow-md'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {cat} <span className="ml-1 opacity-70">({count})</span>
-            </button>
-          );
-        })}
+        {categories
+          .filter(cat => cat !== 'All' && cat !== 'Other')
+          .map((cat) => {
+            const count = getCategoryCount(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  setSearchQuery(''); // Clear search when changing category
+                  setShowAll(false); // Reset showAll when changing category
+                }}
+                className={`px-3 py-1.5 text-[11px] rounded-lg whitespace-nowrap flex-shrink-0 transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-blue-500 text-white font-semibold shadow-md'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {cat} <span className="ml-1 opacity-70">({count})</span>
+              </button>
+            );
+          })}
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-white">
@@ -368,8 +374,18 @@ const ServicePalette: React.FC = () => {
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 text-sm text-gray-600 bg-gray-50">
-        {loading ? 'Loading...' : `${filteredServices.length} services`}
+      <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+        <span className="text-sm text-gray-600">
+          {loading ? 'Loading...' : `${filteredServices.length} services`}
+        </span>
+        {!loading && !searchQuery && selectedCategory === 'All' && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
+          >
+            {showAll ? 'View Less' : 'View All'}
+          </button>
+        )}
       </div>
     </div>
     </>
