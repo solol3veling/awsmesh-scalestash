@@ -247,13 +247,32 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
     // Generate concise AI-friendly README content
     const readmeContent = `# AWS Architecture Diagram JSON Format
 
+## CRITICAL RULES FOR AI GENERATION
+
+**RULE 1: ONLY use service IDs from the "Available Services" list below**
+- DO NOT invent or guess service names
+- DO NOT use generic names like "user", "database", "storage"
+- If a service is not in the list, do NOT include it
+
+**RULE 2: Groups MUST come FIRST in the nodes array**
+- Group nodes must appear BEFORE any child nodes that reference them
+- Child nodes reference parents by index or ID, so parents must exist first
+
+**RULE 3: Use string IDs for groups when using parent references**
+- Example: \`"id": "vpc-group"\` then \`"group": "::::parent::vpc-group"\`
+- Or use numeric indices if groups are first: \`"group": "::::parent::0"\`
+
+**RULE 4: Node ordering matters for index-based connections**
+- \`"source": 0\` refers to the first node in the array
+- Count carefully: [0, 1, 2, 3...] starting from the top
+
 ## Minimal JSON Structure
 
 \`\`\`json
 {
   "nodes": [
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "position": { "x": 100, "y": 100 },
       "label": "Web Server"
     }
@@ -272,7 +291,7 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
 ## Node Fields
 
 ### Regular AWS Service Nodes
-- \`service\`: Service ID (format: \`arch::category::service-name\`)
+- \`service\`: Service ID (format: \`arch::other::service-name\`) - ALL services use "other" as category
 - \`position\`: Coordinates \`{ x, y }\` in pixels
 - \`label\`: Display name (optional)
 - \`group\`: Parent relationship (optional, see Groups section)
@@ -306,7 +325,7 @@ Groups are containers that can hold other AWS service nodes.
 ### Adding Nodes Inside a Group
 \`\`\`json
 {
-  "service": "arch::compute::amazon-ec2",
+  "service": "arch::other::amazon-ec2",
   "label": "Web Server",
   "position": { "x": 50, "y": 50 },
   "group": "::::parent::0"
@@ -324,7 +343,70 @@ Groups are containers that can hold other AWS service nodes.
 
 **Auto-selection**: If \`flow\` is omitted, handles are auto-selected based on node positions.
 
-## Available Services
+## Available Services (COMPLETE LIST)
+
+**IMPORTANT: This is the ONLY valid list. Do NOT use any service name not in this list.**
+
+### Common Service Patterns (for quick reference)
+
+**CRITICAL: ALL services use "other" as the category**
+- Format: \`arch::other::service-name\`
+- Service names have spaces replaced with hyphens and are lowercase
+- The manifest categorizes ALL services as "other" regardless of their folder
+
+**Compute:**
+- arch::other::amazon-ec2
+- arch::other::aws-lambda
+- arch::other::aws-batch
+- arch::other::amazon-ec2-auto-scaling
+- arch::other::aws-elastic-beanstalk
+
+**Storage:**
+- arch::other::amazon-simple-storage-service
+- arch::other::amazon-elastic-block-store
+- arch::other::amazon-elastic-file-system
+- arch::other::amazon-fsx
+- arch::other::aws-backup
+
+**Database:**
+- arch::other::amazon-rds
+- arch::other::amazon-dynamodb
+- arch::other::amazon-aurora
+- arch::other::amazon-elasticache
+- arch::other::amazon-neptune
+
+**Networking & Content Delivery:**
+- arch::other::amazon-virtual-private-cloud
+- arch::other::amazon-api-gateway
+- arch::other::amazon-cloudfront
+- arch::other::elastic-load-balancing
+- arch::other::amazon-route-53
+- arch::other::aws-direct-connect
+
+**Containers:**
+- arch::other::amazon-elastic-container-service
+- arch::other::amazon-elastic-kubernetes-service
+- arch::other::amazon-elastic-container-registry
+
+**Developer Tools:**
+- arch::other::aws-codepipeline
+- arch::other::aws-codebuild
+- arch::other::aws-codedeploy
+- arch::other::aws-codecommit
+
+**Application Integration:**
+- arch::other::amazon-simple-notification-service
+- arch::other::amazon-simple-queue-service
+- arch::other::amazon-eventbridge
+- arch::other::amazon-mq
+
+**Security, Identity & Compliance:**
+- arch::other::aws-identity-and-access-management
+- arch::other::amazon-cognito
+- arch::other::aws-secrets-manager
+- arch::other::aws-waf
+
+### COMPLETE SERVICE LIST (${services.filter(s => s.sizes[64]).length} services)
 
 ${services
   .filter(s => s.sizes[64])
@@ -343,19 +425,19 @@ ${services
       "group": "600::400::container::locked"
     },
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "label": "Web Server",
       "position": { "x": 50, "y": 50 },
       "group": "::::parent::0"
     },
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "label": "App Server",
       "position": { "x": 50, "y": 150 },
       "group": "::::parent::0"
     },
     {
-      "service": "arch::database::amazon-rds",
+      "service": "arch::other::amazon-rds",
       "label": "Database",
       "position": { "x": 700, "y": 100 }
     }
@@ -383,22 +465,22 @@ ${services
 {
   "nodes": [
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "position": { "x": 100, "y": 200 },
       "label": "API Server"
     },
     {
-      "service": "arch::database::amazon-rds",
+      "service": "arch::other::amazon-rds",
       "position": { "x": 400, "y": 100 },
       "label": "User DB"
     },
     {
-      "service": "arch::database::amazon-dynamodb",
+      "service": "arch::other::amazon-dynamodb",
       "position": { "x": 400, "y": 200 },
       "label": "Session DB"
     },
     {
-      "service": "arch::storage::amazon-s3",
+      "service": "arch::other::amazon-simple-storage-service",
       "position": { "x": 400, "y": 300 },
       "label": "Media Storage"
     }
@@ -462,6 +544,85 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
 - Use semantic keywords for common patterns (horizontal, vertical, l-shapes)
 - Use custom format when multiple connections need different handles on same side
 - Omit \`flow\` entirely to let the system auto-select based on node positions
+
+## AI VALIDATION CHECKLIST
+
+Before generating JSON, verify:
+
+1. ✓ **All service IDs exist in the "COMPLETE SERVICE LIST" above**
+   - Search the list before using any service
+   - Do NOT make up service names
+
+2. ✓ **Group nodes come FIRST in the nodes array**
+   - Groups at indices [0, 1, 2...]
+   - Child nodes come after their parent groups
+
+3. ✓ **Parent references are correct**
+   - If group is at index 0: use \`"group": "::::parent::0"\`
+   - If group has id "vpc": use \`"group": "::::parent::vpc"\`
+   - Parents must exist before children reference them
+
+4. ✓ **Connection indices match node positions**
+   - Count nodes from 0: first node = 0, second = 1, etc.
+   - \`"source": 2\` means the 3rd node in the array
+
+5. ✓ **Required fields are present**
+   - Every node needs: \`service\`, \`position\`, \`label\`
+   - Every connection needs: \`source\`, \`target\`
+
+6. ✓ **Group syntax is correct**
+   - Container: \`"width::height::container"\` or \`"width::height::container::locked"\`
+   - Child: \`"::::parent::parent-id"\` or \`"::::parent::0"\`
+
+## COMMON MISTAKES TO AVOID
+
+❌ **DON'T DO THIS:**
+\`\`\`json
+{
+  "service": "arch::users::user"  // ❌ Invalid! Not in service list
+}
+\`\`\`
+
+❌ **DON'T DO THIS:**
+\`\`\`json
+{
+  "nodes": [
+    { "service": "arch::other::amazon-ec2", "group": "::::parent::0" },  // ❌ Parent doesn't exist yet!
+    { "service": "group", "id": 0 }  // ❌ Group comes after child
+  ]
+}
+\`\`\`
+
+❌ **DON'T DO THIS:**
+\`\`\`json
+{
+  "service": "arch::storage::s3"  // ❌ Wrong! Must use: arch::other::amazon-simple-storage-service
+}
+\`\`\`
+
+❌ **DON'T DO THIS:**
+\`\`\`json
+{
+  "service": "arch::networking::amazon-vpc"  // ❌ Wrong category! ALL services use "other"
+}
+\`\`\`
+
+❌ **DON'T DO THIS:**
+\`\`\`json
+{
+  "service": "arch::compute::aws-lambda"  // ❌ Wrong category! Must use: arch::other::aws-lambda
+}
+\`\`\`
+
+✅ **DO THIS:**
+\`\`\`json
+{
+  "nodes": [
+    { "service": "group", "label": "VPC", "position": {"x": 0, "y": 0}, "group": "600::400::container", "id": "vpc" },
+    { "service": "arch::other::amazon-ec2", "label": "Web Server", "position": {"x": 50, "y": 50}, "group": "::::parent::vpc" }
+  ]
+}
+\`\`\`
 `;
 
     // Create and download the file
@@ -1244,7 +1405,7 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                         <textarea
                           value={jsonText}
                           onChange={(e) => setJsonText(e.target.value)}
-                          placeholder={`Paste your JSON here...\n\nExample:\n{\n  "nodes": [\n    {\n      "id": "web-server",\n      "service": "arch::compute::amazon-ec2",\n      "position": { "x": 100, "y": 100 },\n      "label": "Web Server"\n    }\n  ],\n  "connections": []\n}`}
+                          placeholder={`Paste your JSON here...\n\nExample:\n{\n  "nodes": [\n    {\n      "id": "web-server",\n      "service": "arch::other::amazon-ec2",\n      "position": { "x": 100, "y": 100 },\n      "label": "Web Server"\n    }\n  ],\n  "connections": []\n}`}
                           className={`w-full h-64 p-4 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 ${
                             theme === 'dark'
                               ? 'bg-[#1a252f] text-gray-300 border border-gray-700 focus:ring-[#ff9900] placeholder:text-gray-600'
@@ -1495,12 +1656,15 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                       ? 'bg-[#1a252f] text-[#ff9900]'
                       : 'bg-gray-100 text-blue-600'
                   }`}>
-                    prefix::category::service-name
+                    arch::other::service-name
                   </code>
                   <p className="text-sm mt-2">
                     Example: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>
-                      arch::compute::amazon-ec2
+                      arch::other::amazon-ec2
                     </code>
+                  </p>
+                  <p className="text-xs mt-2 font-semibold opacity-75">
+                    IMPORTANT: ALL services use "other" as the category
                   </p>
                   <p className="text-xs mt-2 opacity-75">
                     Icons are automatically mapped from the service ID - no need to specify them!
@@ -1543,7 +1707,7 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                       : 'bg-gray-100 text-gray-800'
                   }`}>
 {`{
-  "service": "arch::compute::amazon-ec2",
+  "service": "arch::other::amazon-ec2",
   "label": "Web Server",
   "position": { "x": 50, "y": 50 },
   "group": "::::parent::0"
@@ -1661,19 +1825,19 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
       "group": "600::400::container::locked"
     },
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "label": "Web Server",
       "position": { "x": 50, "y": 50 },
       "group": "::::parent::0"
     },
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "label": "App Server",
       "position": { "x": 50, "y": 150 },
       "group": "::::parent::0"
     },
     {
-      "service": "arch::database::amazon-rds",
+      "service": "arch::other::amazon-rds",
       "label": "Database",
       "position": { "x": 700, "y": 100 }
     }
@@ -1710,22 +1874,22 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
 {`{
   "nodes": [
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "position": { "x": 100, "y": 200 },
       "label": "API Server"
     },
     {
-      "service": "arch::database::amazon-rds",
+      "service": "arch::other::amazon-rds",
       "position": { "x": 400, "y": 100 },
       "label": "User DB"
     },
     {
-      "service": "arch::database::amazon-dynamodb",
+      "service": "arch::other::amazon-dynamodb",
       "position": { "x": 400, "y": 200 },
       "label": "Session DB"
     },
     {
-      "service": "arch::storage::amazon-s3",
+      "service": "arch::other::amazon-simple-storage-service",
       "position": { "x": 400, "y": 300 },
       "label": "Media Storage"
     }
