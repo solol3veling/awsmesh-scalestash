@@ -10,5 +10,7 @@
 
 - add share as link (wip)
 fix: fix delete when locked (should delete everything in the group)
+- use the cloud icon for logo
+- add undo
 - add notes
 - add aws groups

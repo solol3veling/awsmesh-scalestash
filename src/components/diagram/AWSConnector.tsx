@@ -8,7 +8,7 @@ interface AWSConnectorProps {
   isVisible: boolean;
 }
 
-const AWSConnector: React.FC<AWSConnectorProps> = ({ position, type, id, isVisible }) => {
+const AWSConnector: React.FC<AWSConnectorProps> = ({ position, id, isVisible }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Position connectors at different points along each edge

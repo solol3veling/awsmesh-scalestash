@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from 'reactflow';
 import type { EdgeProps } from 'reactflow';
-import OptionsBubble from './OptionsBubble';
 
 interface AWSEdgeProps extends EdgeProps {
   data?: {
@@ -92,7 +91,6 @@ const AWSEdge: React.FC<AWSEdgeProps> = ({
           strokeWidth: selected ? 1.5 : 1,
           stroke: selected ? '#3b82f6' : '#94a3b8',
         }}
-        onContextMenu={handleContextMenu}
       />
 
       {/* Invisible wider path for easier hover detection */}

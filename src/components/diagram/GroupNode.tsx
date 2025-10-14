@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { NodeResizer, Handle, Position } from 'reactflow';
-import type { Node } from 'reactflow';
+
 import type { NodeData } from '../../types/diagram';
 import OptionsBubble from './OptionsBubble';
 import { Palette, Link2, Unlink } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
 interface GroupNodeData extends NodeData {
-  label?: string;
   backgroundColor?: string;
   borderColor?: string;
   onLabelChange?: (nodeId: string, label: string) => void;

@@ -6,6 +6,7 @@ import ServicePalette from '../icons/ServicePalette';
 
 const FloatingSidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   return (
     <>
@@ -23,7 +24,7 @@ const FloatingSidebar: React.FC = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[400px] p-0">
-              <ServicePalette />
+              <ServicePalette showCodeEditor={showCodeEditor} setShowCodeEditor={setShowCodeEditor} />
             </SheetContent>
           </Sheet>
 

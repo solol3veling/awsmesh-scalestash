@@ -5,6 +5,7 @@ import ReactFlow, {
   BackgroundVariant,
   MarkerType,
   useReactFlow,
+  ConnectionMode,
 } from 'reactflow';
 import type { NodeTypes, EdgeTypes } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -91,7 +92,7 @@ const DiagramCanvas: React.FC = () => {
         labelStyle: {
           cursor: 'move',
         },
-        labelBgPadding: [8, 4],
+        labelBgPadding: [8, 4] as [number, number],
         labelBgBorderRadius: 4,
         labelBgStyle: {
           fill: '#ffffff',
@@ -189,7 +190,7 @@ const DiagramCanvas: React.FC = () => {
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        connectionMode="loose"
+        connectionMode={ConnectionMode.Loose}
         connectOnClick={false}
         isValidConnection={(connection) => {
           console.log('Validating connection:', connection);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, Image, FileCode, FileJson } from 'lucide-react';
+import { Image, FileCode, FileJson } from 'lucide-react';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
