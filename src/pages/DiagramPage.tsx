@@ -4,6 +4,7 @@ import DiagramCanvas from '../components/diagram/DiagramCanvas';
 import ServicePalette from '../components/icons/ServicePalette';
 import CodeEditor from '../components/editor/CodeEditor';
 import PersistenceIndicator from '../components/common/PersistenceIndicator';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import { useDiagram } from '../context/DiagramContext';
 import { useDiagramPersistence } from '../hooks/useDiagramPersistence';
 
@@ -30,6 +31,8 @@ const DiagramPage: React.FC = () => {
 const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEditor }) => {
   const { nodes, edges, dsl, setNodes, setEdges } = useDiagram();
   const [hasLoadedInitialState, setHasLoadedInitialState] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
 
   const {
     hasPersistedState,
@@ -63,19 +66,11 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
   }, [hasLoadedInitialState, loadPersistedState, setNodes, setEdges]);
 
   const handleClearState = () => {
-    if (confirm('Are you sure you want to clear the saved state? This will not clear your current diagram.')) {
-      clearPersistedState();
-    }
+    setShowClearModal(true);
   };
 
   const handleRestoreState = () => {
-    if (confirm('Restore last saved state? This will replace your current diagram.')) {
-      const persistedState = loadPersistedState();
-      if (persistedState) {
-        setNodes(persistedState.nodes);
-        setEdges(persistedState.edges);
-      }
-    }
+    setShowRestoreModal(true);
   };
 
   const metadata = getStateMetadata();
@@ -100,6 +95,44 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
           <CodeEditor />
         </div>
       )}
+
+      {/* Clear State Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearModal}
+        title="Clear Saved State?"
+        message="Are you sure you want to clear the saved state? This will not clear your current diagram."
+        confirmText="Clear State"
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={() => {
+          setShowClearModal(false);
+          clearPersistedState();
+        }}
+        onCancel={() => {
+          setShowClearModal(false);
+        }}
+      />
+
+      {/* Restore State Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showRestoreModal}
+        title="Restore Saved State?"
+        message="Restore last saved state? This will replace your current diagram."
+        confirmText="Restore"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          setShowRestoreModal(false);
+          const persistedState = loadPersistedState();
+          if (persistedState) {
+            setNodes(persistedState.nodes);
+            setEdges(persistedState.edges);
+          }
+        }}
+        onCancel={() => {
+          setShowRestoreModal(false);
+        }}
+      />
     </>
   );
 };

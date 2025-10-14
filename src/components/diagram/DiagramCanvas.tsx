@@ -12,6 +12,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useTheme } from '../../context/ThemeContext';
 import AWSNode from './AWSNode';
 import AWSEdge from './AWSEdge';
+import GroupNode from './GroupNode';
 
 const DiagramCanvas: React.FC = () => {
   const {
@@ -21,7 +22,10 @@ const DiagramCanvas: React.FC = () => {
     onEdgesChange,
     onConnect,
     updateNodeLabel,
+    updateNodeColor,
     toggleNodeLock,
+    bindChildrenToGroup,
+    unbindChildrenFromGroup,
     removeNode,
     duplicateNode,
     removeEdge,
@@ -43,16 +47,22 @@ const DiagramCanvas: React.FC = () => {
         data: {
           ...node.data,
           onLabelChange: updateNodeLabel,
+          onColorChange: updateNodeColor,
           onToggleLock: toggleNodeLock,
           onDelete: removeNode,
           onDuplicate: duplicateNode,
+          onBindChildren: bindChildrenToGroup,
+          onUnbindChildren: unbindChildrenFromGroup,
           isConnecting: connectionNodeId !== null,
         },
       })),
-    [nodes, updateNodeLabel, toggleNodeLock, removeNode, duplicateNode, connectionNodeId]
+    [nodes, updateNodeLabel, updateNodeColor, toggleNodeLock, removeNode, duplicateNode, bindChildrenToGroup, unbindChildrenFromGroup, connectionNodeId]
   );
 
-  const nodeTypes: NodeTypes = useMemo(() => ({ awsNode: AWSNode }), []);
+  const nodeTypes: NodeTypes = useMemo(() => ({
+    awsNode: AWSNode,
+    groupNode: GroupNode,
+  }), []);
 
   const edgeTypes: EdgeTypes = useMemo(
     () => ({
@@ -115,19 +125,43 @@ const DiagramCanvas: React.FC = () => {
         y: event.clientY,
       });
 
-      const newNode = {
-        id: `node-${Date.now()}`,
-        type: 'awsNode',
-        position,
-        data: {
-          service: serviceData.service,
-          category: serviceData.category,
-          label: serviceData.service,
-          iconUrl: serviceData.iconPath,
-        },
-      };
-
-      addNode(newNode);
+      // Check if it's a group node
+      if (serviceData.type === 'group') {
+        const newNode = {
+          id: `group-${Date.now()}`,
+          type: 'groupNode',
+          position,
+          style: {
+            width: 300,
+            height: 200,
+            zIndex: -1,
+          },
+          draggable: true,
+          selectable: true,
+          data: {
+            label: serviceData.label || 'Group',
+            service: 'group',
+            category: 'Container',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            borderColor: '#3b82f6',
+          },
+        };
+        addNode(newNode);
+      } else {
+        // Regular AWS service node
+        const newNode = {
+          id: `node-${Date.now()}`,
+          type: 'awsNode',
+          position,
+          data: {
+            service: serviceData.service,
+            category: serviceData.category,
+            label: serviceData.service,
+            iconUrl: serviceData.iconPath,
+          },
+        };
+        addNode(newNode);
+      }
     },
     [screenToFlowPosition, addNode]
   );

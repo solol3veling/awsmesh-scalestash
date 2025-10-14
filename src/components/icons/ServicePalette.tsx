@@ -961,7 +961,70 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3 justify-between">
+          <>
+            {/* Group Button */}
+            <div
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/reactflow', JSON.stringify({
+                  type: 'group',
+                  label: 'Group',
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onClick={() => {
+                const newNode = {
+                  id: `group-${Date.now()}`,
+                  type: 'groupNode',
+                  position: { x: Math.random() * 300, y: Math.random() * 300 },
+                  style: {
+                    width: 300,
+                    height: 200,
+                    zIndex: -1,
+                  },
+                  draggable: true,
+                  selectable: true,
+                  data: {
+                    label: 'Group',
+                    service: 'group',
+                    category: 'Container',
+                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                    borderColor: '#3b82f6',
+                  },
+                };
+                addNode(newNode);
+              }}
+              className={`w-full p-4 mb-4 rounded-xl cursor-move transition-all border-2 border-dashed ${
+                theme === 'dark'
+                  ? 'bg-[#232f3e] hover:bg-[#2d3f52] border-[#ff9900]/50 hover:border-[#ff9900]'
+                  : 'bg-blue-50/50 hover:bg-blue-100/50 border-blue-300 hover:border-blue-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-[#ff9900]/20 text-[#ff9900]' : 'bg-blue-500/20 text-blue-600'
+                }`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className={`text-sm font-semibold ${
+                    theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    Group Container
+                  </div>
+                  <div className={`text-xs ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    Drag to add a resizable group
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Services List */}
+            <div className="flex flex-wrap gap-3 justify-between">
             {filteredServices.map((service) => {
                 const smallIcon = getSmallIcon(service); // Use 16px for sidebar
                 return (
@@ -1026,7 +1089,8 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
       </div>
 

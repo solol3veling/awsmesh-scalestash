@@ -54,7 +54,10 @@ interface DiagramContextType {
   removeNode: (nodeId: string) => void;
   duplicateNode: (nodeId: string) => void;
   updateNodeLabel: (nodeId: string, label: string) => void;
+  updateNodeColor: (nodeId: string, backgroundColor: string, borderColor: string) => void;
   toggleNodeLock: (nodeId: string) => void;
+  bindChildrenToGroup: (groupId: string) => void;
+  unbindChildrenFromGroup: (groupId: string) => void;
   removeEdge: (edgeId: string) => void;
   updateEdgeLabel: (edgeId: string, label: string) => void;
   updateDSL: () => void;
@@ -182,6 +185,16 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
     );
   }, []);
 
+  const updateNodeColor = useCallback((nodeId: string, backgroundColor: string, borderColor: string) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, backgroundColor, borderColor } }
+          : node
+      )
+    );
+  }, []);
+
   const toggleNodeLock = useCallback((nodeId: string) => {
     setNodes((nds) =>
       nds.map((node) =>
@@ -190,6 +203,90 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
           : node
       )
     );
+  }, []);
+
+  const bindChildrenToGroup = useCallback((groupId: string) => {
+    setNodes((nds) => {
+      const groupNode = nds.find((n) => n.id === groupId);
+      if (!groupNode || groupNode.type !== 'groupNode') return nds;
+
+      // Calculate group bounds
+      const groupBounds = {
+        left: groupNode.position.x,
+        right: groupNode.position.x + (groupNode.style?.width as number || 300),
+        top: groupNode.position.y,
+        bottom: groupNode.position.y + (groupNode.style?.height as number || 200),
+      };
+
+      // Find all nodes that are inside the group bounds
+      return nds.map((node) => {
+        // Skip the group itself
+        if (node.id === groupId) {
+          return { ...node, data: { ...node.data, hasChildren: true } };
+        }
+
+        // Check if node is within group bounds
+        const nodeCenter = {
+          x: node.position.x + 40, // Approximate node center (assuming ~80px width)
+          y: node.position.y + 40,
+        };
+
+        const isInside =
+          nodeCenter.x >= groupBounds.left &&
+          nodeCenter.x <= groupBounds.right &&
+          nodeCenter.y >= groupBounds.top &&
+          nodeCenter.y <= groupBounds.bottom;
+
+        if (isInside && node.type === 'awsNode') {
+          // Calculate relative position to group
+          const relativePosition = {
+            x: node.position.x - groupNode.position.x,
+            y: node.position.y - groupNode.position.y,
+          };
+
+          return {
+            ...node,
+            parentNode: groupId,
+            position: relativePosition,
+            extent: 'parent' as const,
+          };
+        }
+
+        return node;
+      });
+    });
+  }, []);
+
+  const unbindChildrenFromGroup = useCallback((groupId: string) => {
+    setNodes((nds) => {
+      const groupNode = nds.find((n) => n.id === groupId);
+      if (!groupNode) return nds;
+
+      return nds.map((node) => {
+        // Update the group node
+        if (node.id === groupId) {
+          return { ...node, data: { ...node.data, hasChildren: false } };
+        }
+
+        // Unbind children
+        if (node.parentNode === groupId) {
+          // Convert relative position back to absolute
+          const absolutePosition = {
+            x: node.position.x + groupNode.position.x,
+            y: node.position.y + groupNode.position.y,
+          };
+
+          return {
+            ...node,
+            parentNode: undefined,
+            position: absolutePosition,
+            extent: undefined,
+          };
+        }
+
+        return node;
+      });
+    });
   }, []);
 
   const removeEdge = useCallback((edgeId: string) => {
@@ -397,7 +494,10 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         removeNode,
         duplicateNode,
         updateNodeLabel,
+        updateNodeColor,
         toggleNodeLock,
+        bindChildrenToGroup,
+        unbindChildrenFromGroup,
         removeEdge,
         updateEdgeLabel,
         updateDSL,
