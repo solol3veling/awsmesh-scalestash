@@ -1,172 +1,117 @@
-# AWS Architecture Designer
+<div align="center">
 
-A lightweight, cost-efficient React application for creating AWS Architecture Diagrams with a visual canvas and JSON DSL.
+# 🏗️ AWS Mesh - ScaleStash
 
-## Features
+### Interactive AWS Architecture Diagram Tool
 
-- **Visual Diagram Editor**: Drag-and-drop AWS service icons onto a React Flow canvas
-- **DSL JSON Format**: Simple JSON schema for defining architectures
-- **Live Code Editor**: Monaco-powered editor for direct JSON manipulation
-- **Export Capabilities**: Export diagrams as PNG, SVG, or JSON
-- **Lightweight State Management**: Context API + React Hooks (no Redux/Zustand)
-- **No External Dependencies**: All data stored locally, no database required
-- **AWS Service Catalog**: Pre-configured AWS service icons and metadata
+[![GitHub Stars](https://img.shields.io/github/stars/solol3veling/awsmesh-scalestash?style=for-the-badge)](https://github.com/solol3veling/awsmesh-scalestash/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/solol3veling/awsmesh-scalestash?style=for-the-badge)](https://github.com/solol3veling/awsmesh-scalestash/issues)
+[![License](https://img.shields.io/github/license/solol3veling/awsmesh-scalestash?style=for-the-badge)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/elitekaycy/awsmesh-scalestash)
 
-## Tech Stack
+[Features](#-features) • [Demo](#-demo) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
-| Purpose | Technology |
-|---------|-----------|
-| Framework | React + Vite |
-| Diagram Engine | React Flow |
-| State Management | Context API + Hooks |
-| Routing | React Router |
-| UI Styling | TailwindCSS |
-| Code Editor | Monaco Editor |
-| Export | html-to-image |
-| Hosting | Netlify/Vercel (free tier) |
+</div>
 
-## Project Structure
+---
 
-```
-src/
-├── components/
-│   ├── diagram/
-│   │   ├── AWSNode.tsx          # Custom AWS service node
-│   │   └── DiagramCanvas.tsx    # Main React Flow canvas
-│   ├── editor/
-│   │   └── CodeEditor.tsx       # Monaco JSON editor
-│   ├── icons/
-│   │   └── ServicePalette.tsx   # AWS services sidebar
-│   └── layout/
-│       └── Toolbar.tsx          # Top toolbar with export buttons
-├── context/
-│   └── DiagramContext.tsx       # Global state management
-├── hooks/                       # Custom React hooks
-├── pages/
-│   └── DiagramPage.tsx          # Main diagram page
-├── types/
-│   ├── diagram.ts               # DSL schema types
-│   └── aws-services.ts          # AWS services catalog
-├── utils/
-│   └── export.ts                # Export utilities
-└── assets/
-    └── aws-icons/               # Local AWS service icons
-```
+## 📖 About
 
-## DSL JSON Schema (Minimal Format)
+**AWS Mesh - ScaleStash** is a powerful, intuitive web-based tool for creating, editing, and visualizing AWS architecture diagrams. Built with React Flow and TypeScript, it provides a drag-and-drop interface for designing cloud architectures with real AWS service icons and intelligent connection management.
 
-### Basic AWS Service Node
-```json
-{
-  "nodes": [
-    {
-      "service": "arch::compute::amazon-ec2",
-      "label": "Web Server",
-      "position": { "x": 100, "y": 100 }
-    }
-  ],
-  "connections": [
-    {
-      "source": 0,
-      "target": 1,
-      "flow": "horizontal"
-    }
-  ]
-}
-```
+Perfect for cloud architects, DevOps engineers, and developers who need to document and communicate AWS infrastructure designs efficiently.
 
-### Group Containers (VPC, Subnet, etc.)
-```json
-{
-  "nodes": [
-    {
-      "service": "group",
-      "label": "VPC",
-      "position": { "x": 0, "y": 0 },
-      "group": "600::300::container::locked"
-    },
-    {
-      "service": "arch::compute::amazon-ec2",
-      "label": "Web Server",
-      "position": { "x": 50, "y": 50 },
-      "group": "::::parent::0"
-    }
-  ]
-}
-```
+## ✨ Features
 
-### Group Syntax Format
-Groups are containers (like VPC, Subnet) that can hold other nodes:
+### 🎨 Visual Diagram Editor
+- **Drag & Drop Interface** - Intuitive service placement with real AWS icons
+- **1200+ AWS Services** - Complete icon library with automatic icon resolution
+- **Smart Connections** - 12-handle system per node with customizable flow patterns
+- **Group Containers** - Create VPCs, subnets, and logical groupings with parent-child relationships
+- **Dark/Light Theme** - Eye-friendly themes for any environment
 
-**Container Format**: `"width::height::container[::locked]"`
-- `"500::400::container"` - Unlocked group 500x400px
-- `"500::400::container::locked"` - Locked group (cannot be moved)
+### 🤖 AI-Powered Generation
+- **JSON DSL Format** - Minimal, AI-friendly syntax for diagram generation
+- **AI Integration Ready** - Feed structured JSON to AI models for automatic diagram creation
+- **Validation Rules** - Built-in validation to prevent common mistakes
+- **Export/Import** - Save and load diagrams as JSON files
 
-**Child Node Format**: `"::::parent::parent-id"`
-- `"::::parent::0"` - Makes node a child of node at index 0
-- `"::::parent::vpc-1"` - Makes node a child of node with id "vpc-1"
+### 🎯 Advanced Features
+- **Code Editor Integration** - View and edit diagram JSON directly
+- **Connection Patterns** - Semantic keywords (horizontal, vertical, L-shapes) and custom handle selection
+- **Auto-positioning** - Smart handle selection based on node positions
+- **Persistence** - Save your work locally with browser storage
+- **Responsive Design** - Works on desktop and tablet devices
 
-### Service Name Format
-Use format: `arch::category::service-name` (lowercase, hyphens)
+### 🔧 Developer Friendly
+- **TypeScript** - Fully typed for better development experience
+- **Component Architecture** - Modular, maintainable codebase
+- **React Flow** - Built on top of the powerful React Flow library
+- **Docker Ready** - One-command deployment with Docker
+- **CI/CD Pipeline** - Automated builds and deployments with GitHub Actions
 
-**Common Services**:
-- **Compute**: `amazon-ec2`, `aws-lambda`, `aws-batch`
-- **Database**: `amazon-rds`, `amazon-dynamodb`, `amazon-elasticache`, `amazon-aurora`
-- **Networking**: `amazon-virtual-private-cloud`, `amazon-api-gateway`, `amazon-cloudfront`, `amazon-route-53`, `elastic-load-balancing`
-- **Storage**: `amazon-simple-storage-service` (S3), `amazon-elastic-block-store`, `amazon-elastic-file-system`
-- **Containers**: `amazon-elastic-container-service`, `amazon-elastic-kubernetes-service`
+## 🚀 Quick Start
 
-**Full List**: See ServicePalette in app or check `public/aws-icons/Architecture-Service-Icons_*/Arch_*` directories
+### Prerequisites
+- Node.js 20+ and npm
+- Docker (optional, for containerized deployment)
 
-### Connection Flow Patterns
-**Semantic Keywords** (recommended):
-- `"horizontal"` - Right to left flow
-- `"vertical"` - Top to bottom flow
-- `"diagonal-down"`, `"diagonal-up"` - Diagonal flows
-- `"l-shape-down"`, `"l-shape-up"` - L-shaped connections
-
-**Custom Format** (for multiple connections):
-- `"right::left::2::2"` - Full: source-dir::target-dir::source-handle::target-handle
-- `"right::left"` - Short: uses middle handles (handle 2)
-- Each node has 12 handles: top-1/2/3, right-1/2/3, bottom-1/2/3, left-1/2/3
-
-## Installation
+### Local Development
 
 ```bash
+# Clone the repository
+git clone https://github.com/solol3veling/awsmesh-scalestash.git
+cd awsmesh-scalestash
+
 # Install dependencies
 npm install
 
+# Generate AWS icons manifest
+npm run icons:generate
+
 # Start development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
-## Usage
+Visit `http://localhost:5173` to see the application.
 
-1. **Add Services**: Click or drag AWS services from the left sidebar onto the canvas
-2. **Connect Services**: Drag connections between service nodes
-3. **Edit Properties**: Click nodes to edit labels and metadata
-4. **View/Edit JSON**: Toggle the code editor to see or modify the DSL JSON
-5. **Export**: Use toolbar buttons to export as PNG, SVG, or JSON
+### Docker Deployment
 
-## AI Prompt Examples
+```bash
+# Build the Docker image
+docker build -t awsmesh-scalestash .
 
-### Example 1: Simple 3-tier architecture
-```
-Create a 3-tier AWS architecture with:
-- VPC group (600x400, locked) containing:
-  - EC2 web server at (50, 50)
-  - EC2 app server at (50, 150)
-- RDS database at (700, 100) outside VPC
-- Horizontal connections: web->app, app->db
+# Run the container
+docker run -d -p 9090:9090 --name scalestash awsmesh-scalestash
 ```
 
-**Generated JSON:**
+Visit `http://localhost:9090` to access the application.
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `/docs` directory:
+
+- [📘 Quick Start Guide](docs/QUICKSTART.md) - Get started in minutes
+- [🎨 Icons Guide](docs/ICONS-GUIDE.md) - Understanding the AWS icon system
+- [🔄 Icon System Summary](docs/ICON-SYSTEM-SUMMARY.md) - Technical details of icon management
+- [📏 Icon Sizing](docs/ICON-SIZING-UPDATE.md) - Icon sizing standards
+- [💾 Persistence](docs/PERSISTENCE.md) - Local storage implementation
+- [🔍 Search Improvements](docs/SEARCH-IMPROVEMENTS.md) - Search functionality details
+
+## 🎯 Usage
+
+### Creating Diagrams
+
+1. **Add Services**: Drag AWS services from the sidebar or click to add
+2. **Create Groups**: Add VPC or subnet containers for logical organization
+3. **Connect Services**: Click and drag between services to create connections
+4. **Customize**: Edit labels, adjust positions, and customize connection flows
+5. **Export**: Download your diagram as JSON for version control or AI processing
+
+### AI-Generated Diagrams
+
+Use the built-in JSON format to generate diagrams programmatically:
+
 ```json
 {
   "nodes": [
@@ -177,151 +122,94 @@ Create a 3-tier AWS architecture with:
       "group": "600::400::container::locked"
     },
     {
-      "service": "arch::compute::amazon-ec2",
+      "service": "arch::other::amazon-ec2",
       "label": "Web Server",
       "position": { "x": 50, "y": 50 },
       "group": "::::parent::0"
     },
     {
-      "service": "arch::compute::amazon-ec2",
-      "label": "App Server",
-      "position": { "x": 50, "y": 150 },
-      "group": "::::parent::0"
-    },
-    {
-      "service": "arch::database::amazon-rds",
+      "service": "arch::other::amazon-rds",
       "label": "Database",
       "position": { "x": 700, "y": 100 }
     }
   ],
   "connections": [
-    { "source": 1, "target": 2, "flow": "vertical" },
-    { "source": 2, "target": 3, "flow": "horizontal" }
-  ]
-}
-```
-
-### Example 2: Microservices with API Gateway
-```
-Create microservices architecture:
-- API Gateway at (100, 100)
-- Lambda 1 at (300, 50)
-- Lambda 2 at (300, 150)
-- DynamoDB at (500, 100)
-- Connect gateway to both lambdas horizontally
-- Connect both lambdas to DynamoDB horizontally
-```
-
-**Generated JSON:**
-```json
-{
-  "nodes": [
     {
-      "service": "arch::networking::amazon-api-gateway",
-      "label": "API Gateway",
-      "position": { "x": 100, "y": 100 }
-    },
-    {
-      "service": "arch::compute::aws-lambda",
-      "label": "User Service",
-      "position": { "x": 300, "y": 50 }
-    },
-    {
-      "service": "arch::compute::aws-lambda",
-      "label": "Order Service",
-      "position": { "x": 300, "y": 150 }
-    },
-    {
-      "service": "arch::database::amazon-dynamodb",
-      "label": "Database",
-      "position": { "x": 500, "y": 100 }
+      "source": 1,
+      "target": 2,
+      "flow": "horizontal",
+      "label": "queries"
     }
-  ],
-  "connections": [
-    { "source": 0, "target": 1, "flow": "horizontal" },
-    { "source": 0, "target": 2, "flow": "horizontal" },
-    { "source": 1, "target": 3, "flow": "horizontal" },
-    { "source": 2, "target": 3, "flow": "horizontal" }
   ]
 }
 ```
 
-## AWS Icons Setup
+## 🏗️ Architecture
 
-To use real AWS Architecture Icons:
-
-1. Download official AWS icons from [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)
-2. Extract icons to `public/aws-icons/` directory
-3. Organize by category: `compute/`, `storage/`, `database/`, etc.
-4. Update icon paths in `src/types/aws-services.ts`
-
-**Note**: Currently using placeholder fallback icons (service initials). Replace with actual SVG icons for production use.
-
-## Deployment
-
-### Netlify
-
-```bash
-# Build the project
-npm run build
-
-# Deploy to Netlify
-# Drag-drop the 'dist' folder to Netlify or use CLI
-npx netlify-cli deploy --prod
+```
+scalestash-aws/
+├── src/
+│   ├── components/       # React components
+│   │   ├── diagram/      # Diagram-specific components
+│   │   ├── icons/        # Service palette & icon handling
+│   │   │   └── modals/   # Upload & Info modals
+│   │   └── layout/       # Layout components
+│   ├── context/          # React context providers
+│   ├── hooks/            # Custom React hooks
+│   ├── types/            # TypeScript type definitions
+│   └── utils/            # Utility functions
+│       ├── serviceUtils.ts      # Service ID utilities
+│       └── readmeGenerator.ts   # README generation
+├── public/
+│   └── aws-icons/        # AWS service icons (1200+ SVG files)
+├── docs/                 # Documentation
+└── .github/workflows/    # CI/CD pipelines
 ```
 
-### Vercel
+## 🛠️ Tech Stack
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
+- **Frontend**: React 18, TypeScript, Vite
+- **Diagram Engine**: React Flow
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API
+- **Build Tool**: Vite
+- **Deployment**: Docker, Nginx
+- **CI/CD**: GitHub Actions
 
-# Deploy
-vercel
-```
+## 🤝 Contributing
 
-## Customization
+Contributions are welcome! Here's how you can help:
 
-### Adding New AWS Services
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Edit `src/types/aws-services.ts`:
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
-```typescript
-{
-  id: 'new-service',
-  name: 'New Service',
-  category: 'Compute',
-  iconPath: '/aws-icons/compute/new-service.svg',
-  description: 'Service description'
-}
-```
+## 📝 License
 
-### Styling Nodes
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Customize node appearance in `src/components/diagram/AWSNode.tsx`
+## 🙏 Acknowledgments
 
-### Canvas Settings
+- AWS for providing comprehensive icon sets
+- React Flow team for the excellent diagram library
+- All contributors who help improve this project
 
-Modify canvas background, controls, and minimap in `src/components/diagram/DiagramCanvas.tsx`
+## 📧 Contact & Support
 
-## Roadmap
-
-- [ ] Import JSON DSL files
-- [ ] Auto-layout algorithms
-- [ ] Collaborative editing (WebRTC)
-- [ ] Templates library
-- [ ] Custom node types
-- [ ] Terraform export
-- [ ] Cost estimation integration
-
-## License
-
-MIT
-
-## Contributing
-
-Pull requests welcome! Please open an issue first to discuss proposed changes.
+- **Issues**: [GitHub Issues](https://github.com/solol3veling/awsmesh-scalestash/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/solol3veling/awsmesh-scalestash/discussions)
+- **Organization**: [solol3veling](https://github.com/solol3veling)
 
 ---
 
-Built with React, React Flow, and TailwindCSS
+<div align="center">
+
+Made with ❤️ by the ScaleStash Team
+
+[⬆ Back to Top](#-aws-mesh---scalestash)
+
+</div>
