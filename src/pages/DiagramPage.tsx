@@ -118,14 +118,18 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
       {/* Clear State Confirmation Modal */}
       <ConfirmationModal
         isOpen={showClearModal}
-        title="Clear Saved State?"
-        message="Are you sure you want to clear the saved state? This will not clear your current diagram."
-        confirmText="Clear State"
+        title="Clear Everything?"
+        message="Are you sure you want to clear the saved state and current diagram? This action cannot be undone."
+        confirmText="Clear All"
         cancelText="Cancel"
         variant="warning"
         onConfirm={() => {
           setShowClearModal(false);
+          // Clear localStorage
           clearPersistedState();
+          // Clear canvas
+          setNodes([]);
+          setEdges([]);
         }}
         onCancel={() => {
           setShowClearModal(false);
