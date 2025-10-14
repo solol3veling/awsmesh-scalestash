@@ -54,6 +54,7 @@ interface DiagramContextType {
   removeNode: (nodeId: string) => void;
   duplicateNode: (nodeId: string) => void;
   updateNodeLabel: (nodeId: string, label: string) => void;
+  updateNodeNote: (nodeId: string, note: string) => void;
   updateNodeColor: (nodeId: string, backgroundColor: string, borderColor: string) => void;
   toggleNodeLock: (nodeId: string) => void;
   bindChildrenToGroup: (groupId: string) => void;
@@ -273,6 +274,16 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
       nds.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, label } }
+          : node
+      )
+    );
+  }, []);
+
+  const updateNodeNote = useCallback((nodeId: string, note: string) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, note } }
           : node
       )
     );
@@ -668,6 +679,7 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         removeNode,
         duplicateNode,
         updateNodeLabel,
+        updateNodeNote,
         updateNodeColor,
         toggleNodeLock,
         bindChildrenToGroup,

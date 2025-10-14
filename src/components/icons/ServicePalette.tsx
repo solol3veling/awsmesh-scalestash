@@ -705,6 +705,67 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
               </div>
             </div>
 
+            {/* Notes Button */}
+            <div
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/reactflow', JSON.stringify({
+                  type: 'note',
+                  label: 'Note',
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onClick={() => {
+                const newNode = {
+                  id: `note-${Date.now()}`,
+                  type: 'noteNode',
+                  position: { x: Math.random() * 300, y: Math.random() * 300 },
+                  style: {
+                    width: 150,
+                    height: 100,
+                    zIndex: 10,
+                  },
+                  draggable: true,
+                  selectable: true,
+                  data: {
+                    label: 'Note',
+                    service: 'note',
+                    category: 'Annotation',
+                    note: '',
+                    backgroundColor: '#fefce8',
+                  },
+                };
+                addNode(newNode);
+              }}
+              className={`w-full p-4 mb-4 rounded-xl cursor-move transition-all border-2 border-dashed ${
+                theme === 'dark'
+                  ? 'bg-[#232f3e] hover:bg-[#2d3f52] border-yellow-500/50 hover:border-yellow-500'
+                  : 'bg-yellow-50/50 hover:bg-yellow-100/50 border-yellow-300 hover:border-yellow-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  theme === 'dark' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-yellow-500/20 text-yellow-600'
+                }`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className={`text-sm font-semibold ${
+                    theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    Sticky Note
+                  </div>
+                  <div className={`text-xs ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    Add annotations and comments
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Services List */}
             <div className="flex flex-wrap gap-3 justify-between">
             {filteredServices.map((service) => {

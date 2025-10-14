@@ -14,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import AWSNode from './AWSNode';
 import AWSEdge from './AWSEdge';
 import GroupNode from './GroupNode';
+import NoteNode from './NoteNode';
 
 const DiagramCanvas: React.FC = () => {
   const {
@@ -23,6 +24,7 @@ const DiagramCanvas: React.FC = () => {
     onEdgesChange,
     onConnect,
     updateNodeLabel,
+    updateNodeNote,
     updateNodeColor,
     toggleNodeLock,
     bindChildrenToGroup,
@@ -48,6 +50,7 @@ const DiagramCanvas: React.FC = () => {
         data: {
           ...node.data,
           onLabelChange: updateNodeLabel,
+          onNoteChange: updateNodeNote,
           onColorChange: updateNodeColor,
           onToggleLock: toggleNodeLock,
           onDelete: removeNode,
@@ -57,12 +60,13 @@ const DiagramCanvas: React.FC = () => {
           isConnecting: connectionNodeId !== null,
         },
       })),
-    [nodes, updateNodeLabel, updateNodeColor, toggleNodeLock, removeNode, duplicateNode, bindChildrenToGroup, unbindChildrenFromGroup, connectionNodeId]
+    [nodes, updateNodeLabel, updateNodeNote, updateNodeColor, toggleNodeLock, removeNode, duplicateNode, bindChildrenToGroup, unbindChildrenFromGroup, connectionNodeId]
   );
 
   const nodeTypes: NodeTypes = useMemo(() => ({
     awsNode: AWSNode,
     groupNode: GroupNode,
+    noteNode: NoteNode,
   }), []);
 
   const edgeTypes: EdgeTypes = useMemo(
@@ -145,6 +149,28 @@ const DiagramCanvas: React.FC = () => {
             category: 'Container',
             backgroundColor: 'rgba(59, 130, 246, 0.05)',
             borderColor: '#3b82f6',
+          },
+        };
+        addNode(newNode);
+      } else if (serviceData.type === 'note') {
+        // Note node
+        const newNode = {
+          id: `note-${Date.now()}`,
+          type: 'noteNode',
+          position,
+          style: {
+            width: 150,
+            height: 100,
+            zIndex: 10,
+          },
+          draggable: true,
+          selectable: true,
+          data: {
+            label: 'Note',
+            service: 'note',
+            category: 'Annotation',
+            note: '',
+            backgroundColor: '#fefce8',
           },
         };
         addNode(newNode);
