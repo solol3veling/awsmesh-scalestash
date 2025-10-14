@@ -63,6 +63,10 @@ interface DiagramContextType {
   updateDSL: () => void;
   loadFromDSL: (dsl: DiagramDSL, iconResolver?: (service: string) => string | null) => void;
   exportDSL: () => DiagramDSL;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const DiagramContext = createContext<DiagramContextType | undefined>(undefined);
@@ -92,6 +96,95 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
     nodes: [],
     connections: [],
   });
+
+  // History state for undo/redo
+  const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isUndoRedoAction, setIsUndoRedoAction] = useState(false);
+  const historyTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Track all changes to nodes and edges and save to history with debouncing
+  React.useEffect(() => {
+    if (isUndoRedoAction) return; // Don't save if this is an undo/redo action
+
+    // Clear existing timeout
+    if (historyTimeoutRef.current) {
+      clearTimeout(historyTimeoutRef.current);
+    }
+
+    // Debounce history updates - wait 500ms after the last change
+    historyTimeoutRef.current = setTimeout(() => {
+      const currentState = { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) };
+
+      setHistory((prev) => {
+        // Check if state actually changed from the last saved state
+        const lastState = prev[prev.length - 1];
+        if (lastState &&
+            JSON.stringify(lastState.nodes) === JSON.stringify(currentState.nodes) &&
+            JSON.stringify(lastState.edges) === JSON.stringify(currentState.edges)) {
+          return prev; // No change, don't add to history
+        }
+
+        // Remove any future history if we're not at the end
+        const newHistory = prev.slice(0, historyIndex + 1);
+        // Add current state
+        const updatedHistory = [...newHistory, currentState];
+        // Limit history to last 50 states
+        if (updatedHistory.length > 50) {
+          const trimmed = updatedHistory.slice(-50);
+          setHistoryIndex(trimmed.length - 1);
+          return trimmed;
+        }
+        setHistoryIndex(updatedHistory.length - 1);
+        return updatedHistory;
+      });
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current);
+      }
+    };
+  }, [nodes, edges, isUndoRedoAction, historyIndex]);
+
+  // Undo function
+  const undo = useCallback(() => {
+    if (historyIndex <= 0) return;
+
+    const newIndex = historyIndex - 1;
+    const previousState = history[newIndex];
+
+    if (!previousState) return;
+
+    setIsUndoRedoAction(true);
+    setHistoryIndex(newIndex);
+    setNodes(JSON.parse(JSON.stringify(previousState.nodes)));
+    setEdges(JSON.parse(JSON.stringify(previousState.edges)));
+
+    // Reset flag after state update
+    setTimeout(() => setIsUndoRedoAction(false), 100);
+  }, [history, historyIndex]);
+
+  // Redo function
+  const redo = useCallback(() => {
+    if (historyIndex >= history.length - 1) return;
+
+    const newIndex = historyIndex + 1;
+    const nextState = history[newIndex];
+
+    if (!nextState) return;
+
+    setIsUndoRedoAction(true);
+    setHistoryIndex(newIndex);
+    setNodes(JSON.parse(JSON.stringify(nextState.nodes)));
+    setEdges(JSON.parse(JSON.stringify(nextState.edges)));
+
+    // Reset flag after state update
+    setTimeout(() => setIsUndoRedoAction(false), 100);
+  }, [history, historyIndex]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -584,6 +677,10 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
         updateDSL,
         loadFromDSL,
         exportDSL,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
       }}
     >
       {children}

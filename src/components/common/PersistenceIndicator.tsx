@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useDiagram } from '../../context/DiagramContext';
 
 interface PersistenceIndicatorProps {
   hasPersistedState: boolean;
@@ -19,6 +20,7 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
   onRestoreState,
 }) => {
   const { theme } = useTheme();
+  const { undo, redo, canUndo, canRedo } = useDiagram();
   const [showDetails, setShowDetails] = React.useState(false);
 
   if (!hasPersistedState) return null;
@@ -53,6 +55,45 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
             Auto-saved {lastSaved ? formatTimeAgo(lastSaved) : 'recently'}
           </span>
         </div>
+
+        {/* Divider */}
+        <div className={`w-px h-4 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />
+
+        {/* Undo button */}
+        <button
+          onClick={undo}
+          disabled={!canUndo}
+          className={`p-1 rounded transition-colors ${
+            canUndo
+              ? theme === 'dark'
+                ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                : 'hover:bg-gray-100 text-gray-600'
+              : 'text-gray-600 opacity-30 cursor-not-allowed'
+          }`}
+          title="Undo (Ctrl+Z)"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          </svg>
+        </button>
+
+        {/* Redo button */}
+        <button
+          onClick={redo}
+          disabled={!canRedo}
+          className={`p-1 rounded transition-colors ${
+            canRedo
+              ? theme === 'dark'
+                ? 'hover:bg-[#ff9900]/20 text-gray-400 hover:text-[#ff9900]'
+                : 'hover:bg-gray-100 text-gray-600'
+              : 'text-gray-600 opacity-30 cursor-not-allowed'
+          }`}
+          title="Redo (Ctrl+Y)"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+          </svg>
+        </button>
 
         {/* Divider */}
         <div className={`w-px h-4 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`} />

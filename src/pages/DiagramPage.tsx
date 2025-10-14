@@ -29,7 +29,7 @@ const DiagramPage: React.FC = () => {
 
 // Separate component to access diagram context inside ReactFlowProvider
 const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEditor }) => {
-  const { nodes, edges, dsl, setNodes, setEdges } = useDiagram();
+  const { nodes, edges, dsl, setNodes, setEdges, undo, redo } = useDiagram();
   const [hasLoadedInitialState, setHasLoadedInitialState] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -64,6 +64,25 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
 
     setHasLoadedInitialState(true);
   }, [hasLoadedInitialState, loadPersistedState, setNodes, setEdges]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Ctrl (or Cmd on Mac) is pressed
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      if (isCtrlOrCmd && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (isCtrlOrCmd && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   const handleClearState = () => {
     setShowClearModal(true);
