@@ -247,7 +247,7 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
     // Generate concise AI-friendly README content
     const readmeContent = `# AWS Architecture Diagram JSON Format
 
-## JSON Structure
+## Minimal JSON Structure
 
 \`\`\`json
 {
@@ -256,61 +256,6 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
       "service": "arch::compute::amazon-ec2",
       "position": { "x": 100, "y": 100 },
       "label": "Web Server"
-    }
-  ],
-  "connections": [
-    {
-      "source": 0,
-      "target": 1,
-      "label": "queries"
-    }
-  ]
-}
-\`\`\`
-
-## Fields
-
-### nodes (required)
-- \`service\`: Service ID (format: \`prefix::category::service-name\`)
-- \`position\`: Coordinates \`{ x, y }\` in pixels
-- \`label\`: Display name (optional)
-
-### connections (optional)
-- \`source\`: Source node index (0, 1, 2...) or node ID string
-- \`target\`: Target node index (0, 1, 2...) or node ID string
-- \`flow\`: Connection flow pattern (optional, see Flow Patterns section below)
-- \`label\`: Connection description (optional)
-
-**Connection behavior:**
-- If \`flow\` is omitted, handles are auto-selected based on node positions
-- Use \`flow\` for precise control over connection paths
-
-## Available Services
-
-${services
-  .filter(s => s.sizes[64])
-  .map(service => `${getUniformServiceId(service)}`)
-  .join('\n')}
-
-## Example 1: Basic Diagram (using semantic keywords)
-
-\`\`\`json
-{
-  "nodes": [
-    {
-      "service": "arch::compute::amazon-ec2",
-      "position": { "x": 100, "y": 100 },
-      "label": "Web Server"
-    },
-    {
-      "service": "arch::database::amazon-rds",
-      "position": { "x": 400, "y": 100 },
-      "label": "Database"
-    },
-    {
-      "service": "arch::storage::amazon-s3",
-      "position": { "x": 250, "y": 300 },
-      "label": "Storage"
     }
   ],
   "connections": [
@@ -319,12 +264,114 @@ ${services
       "target": 1,
       "flow": "horizontal",
       "label": "queries"
+    }
+  ]
+}
+\`\`\`
+
+## Node Fields
+
+### Regular AWS Service Nodes
+- \`service\`: Service ID (format: \`arch::category::service-name\`)
+- \`position\`: Coordinates \`{ x, y }\` in pixels
+- \`label\`: Display name (optional)
+- \`group\`: Parent relationship (optional, see Groups section)
+
+### Group Container Nodes (VPC, Subnet, etc.)
+- \`service\`: "group" (required)
+- \`label\`: Group name (e.g., "VPC", "Public Subnet")
+- \`position\`: Coordinates \`{ x, y }\` in pixels
+- \`group\`: Format \`"width::height::container[::locked]"\`
+  - Example: \`"600::400::container"\` - 600x400px unlocked group
+  - Example: \`"500::300::container::locked"\` - Locked group (cannot be moved)
+
+### Child Nodes (inside groups)
+- Include all regular node fields
+- Add \`group\`: \`"::::parent::parent-id"\` or \`"::::parent::0"\` (index)
+
+## Groups (VPC, Subnets, etc.)
+
+Groups are containers that can hold other AWS service nodes.
+
+### Creating a Group Container
+\`\`\`json
+{
+  "service": "group",
+  "label": "VPC",
+  "position": { "x": 0, "y": 0 },
+  "group": "600::400::container::locked"
+}
+\`\`\`
+
+### Adding Nodes Inside a Group
+\`\`\`json
+{
+  "service": "arch::compute::amazon-ec2",
+  "label": "Web Server",
+  "position": { "x": 50, "y": 50 },
+  "group": "::::parent::0"
+}
+\`\`\`
+
+**Note**: Child positions are relative to parent group's top-left corner.
+
+## Connection Fields
+
+- \`source\`: Source node index (0, 1, 2...) or node ID string
+- \`target\`: Target node index (0, 1, 2...) or node ID string
+- \`flow\`: Connection flow pattern (optional, see Flow Patterns section)
+- \`label\`: Connection description (optional)
+
+**Auto-selection**: If \`flow\` is omitted, handles are auto-selected based on node positions.
+
+## Available Services
+
+${services
+  .filter(s => s.sizes[64])
+  .map(service => `${getUniformServiceId(service)}`)
+  .join('\n')}
+
+## Example 1: Simple 3-Tier Architecture with VPC
+
+\`\`\`json
+{
+  "nodes": [
+    {
+      "service": "group",
+      "label": "VPC",
+      "position": { "x": 0, "y": 0 },
+      "group": "600::400::container::locked"
     },
     {
-      "source": 0,
+      "service": "arch::compute::amazon-ec2",
+      "label": "Web Server",
+      "position": { "x": 50, "y": 50 },
+      "group": "::::parent::0"
+    },
+    {
+      "service": "arch::compute::amazon-ec2",
+      "label": "App Server",
+      "position": { "x": 50, "y": 150 },
+      "group": "::::parent::0"
+    },
+    {
+      "service": "arch::database::amazon-rds",
+      "label": "Database",
+      "position": { "x": 700, "y": 100 }
+    }
+  ],
+  "connections": [
+    {
+      "source": 1,
       "target": 2,
       "flow": "vertical",
-      "label": "uploads to"
+      "label": "forwards to"
+    },
+    {
+      "source": 2,
+      "target": 3,
+      "flow": "horizontal",
+      "label": "queries"
     }
   ]
 }
@@ -1460,6 +1507,55 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                   </p>
                 </div>
 
+                {/* Groups Section */}
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Groups (VPC, Subnets, etc.)
+                  </h3>
+                  <p className="text-sm mb-3">
+                    Groups are containers that can hold other AWS service nodes. Use them for VPCs, Subnets, or logical groupings.
+                  </p>
+
+                  <p className="text-sm font-semibold mb-2">Creating a Group Container:</p>
+                  <pre className={`p-3 rounded-lg text-xs mb-3 ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+{`{
+  "service": "group",
+  "label": "VPC",
+  "position": { "x": 0, "y": 0 },
+  "group": "600::400::container::locked"
+}`}
+                  </pre>
+
+                  <p className="text-sm font-semibold mb-2">Group Field Format:</p>
+                  <ul className="text-xs space-y-1 mb-3">
+                    <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"width::height::container"</code> - Unlocked group</li>
+                    <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"width::height::container::locked"</code> - Locked group (cannot be moved)</li>
+                  </ul>
+
+                  <p className="text-sm font-semibold mb-2">Adding Nodes Inside Groups:</p>
+                  <pre className={`p-3 rounded-lg text-xs mb-2 ${
+                    theme === 'dark'
+                      ? 'bg-[#1a252f] text-gray-300'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+{`{
+  "service": "arch::compute::amazon-ec2",
+  "label": "Web Server",
+  "position": { "x": 50, "y": 50 },
+  "group": "::::parent::0"
+}`}
+                  </pre>
+                  <ul className="text-xs space-y-1">
+                    <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"::::parent::0"</code> - Makes node a child of node at index 0</li>
+                    <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"::::parent::vpc-1"</code> - Makes node a child of node with id "vpc-1"</li>
+                    <li>• Child positions are relative to parent's top-left corner</li>
+                  </ul>
+                </div>
+
                 {/* Available Services */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -1548,9 +1644,9 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
                 {/* JSON Example 1 */}
                 <div>
                   <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Example 1: Basic Diagram
+                    Example 1: 3-Tier Architecture with VPC
                   </h3>
-                  <p className="text-sm mb-2">Using semantic keywords for simple connections:</p>
+                  <p className="text-sm mb-2">Using groups and semantic flow keywords:</p>
                   <pre className={`p-4 rounded-lg overflow-x-auto text-xs ${
                     theme === 'dark'
                       ? 'bg-[#1a252f] text-gray-300'
@@ -1559,33 +1655,41 @@ ${Object.keys(FLOW_PATTERNS).map(key => `- \`${key}\`: Connects ${FLOW_PATTERNS[
 {`{
   "nodes": [
     {
+      "service": "group",
+      "label": "VPC",
+      "position": { "x": 0, "y": 0 },
+      "group": "600::400::container::locked"
+    },
+    {
       "service": "arch::compute::amazon-ec2",
-      "position": { "x": 100, "y": 100 },
-      "label": "Web Server"
+      "label": "Web Server",
+      "position": { "x": 50, "y": 50 },
+      "group": "::::parent::0"
+    },
+    {
+      "service": "arch::compute::amazon-ec2",
+      "label": "App Server",
+      "position": { "x": 50, "y": 150 },
+      "group": "::::parent::0"
     },
     {
       "service": "arch::database::amazon-rds",
-      "position": { "x": 400, "y": 100 },
-      "label": "Database"
-    },
-    {
-      "service": "arch::storage::amazon-s3",
-      "position": { "x": 250, "y": 300 },
-      "label": "Storage"
+      "label": "Database",
+      "position": { "x": 700, "y": 100 }
     }
   ],
   "connections": [
     {
-      "source": 0,
-      "target": 1,
-      "flow": "horizontal",
-      "label": "queries"
-    },
-    {
-      "source": 0,
+      "source": 1,
       "target": 2,
       "flow": "vertical",
-      "label": "uploads to"
+      "label": "forwards to"
+    },
+    {
+      "source": 2,
+      "target": 3,
+      "flow": "horizontal",
+      "label": "queries"
     }
   ]
 }`}

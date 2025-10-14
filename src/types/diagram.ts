@@ -13,7 +13,6 @@ export type AWSServiceCategory =
 
 export interface AWSNode {
   id?: string; // Optional for minimal JSON - will be auto-generated
-  type?: 'aws-service'; // Optional for minimal JSON
   service: string; // e.g., 'arch::compute::amazon-ec2'
   category?: AWSServiceCategory; // Optional - can be derived from service
   label?: string; // Optional - will default to service name
@@ -21,6 +20,13 @@ export interface AWSNode {
     x: number;
     y: number;
   };
+  // Compact group field: "width::height::role::parent-id::locked"
+  // Examples:
+  //   "500::400::container" - Creates a group container 500x400 (unlocked)
+  //   "500::400::container::::locked" - Creates a locked group
+  //   "::parent::group-1" - Makes this node a child of group-1
+  //   "300::200::container::::locked" - Locked group 300x200
+  group?: string;
   data?: {
     instanceType?: string;
     region?: string;

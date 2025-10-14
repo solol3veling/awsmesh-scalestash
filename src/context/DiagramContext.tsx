@@ -312,18 +312,42 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
     });
 
     const dslNodes: AWSNode[] = nodes.map((node) => {
+      // Handle group nodes - use compact group syntax
+      if (node.type === 'groupNode') {
+        const width = node.style?.width || 300;
+        const height = node.style?.height || 200;
+        const locked = node.data.locked ? '::locked' : '';
+
+        // Format: "width::height::container::::locked" (omit trailing if unlocked)
+        const groupValue = `${width}::${height}::container${locked}`;
+
+        return {
+          id: node.id,
+          service: 'group',
+          label: node.data.label || 'Group',
+          position: node.position,
+          group: groupValue,
+        };
+      }
+
+      // Handle regular AWS service nodes
       const serviceName = node.data.service || 'unknown';
       const category = node.data.category || 'Compute';
 
-      return {
+      const baseNode: AWSNode = {
         id: node.id,
-        type: 'aws-service',
         service: getUniformServiceId(serviceName, category),
         category: category,
         label: node.data.label || '',
         position: node.position,
-        data: node.data,
       };
+
+      // Add compact group field for child nodes: "::::parent::parent-id"
+      if (node.parentNode) {
+        baseNode.group = `::::parent::${node.parentNode}`;
+      }
+
+      return baseNode;
     });
 
     const dslConnections = edges.map((edge) => ({
@@ -348,12 +372,69 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   // Load diagram from DSL JSON
   const loadFromDSL = useCallback((dslData: DiagramDSL, iconResolver?: (service: string) => string | null) => {
     const flowNodes: Node[] = dslData.nodes.map((node, index) => {
+      // Parse compact group field if present
+      // Format: "width::height::container::locked" or "::::parent::parent-id"
+      let groupInfo: {
+        isContainer?: boolean;
+        isChild?: boolean;
+        width?: number;
+        height?: number;
+        locked?: boolean;
+        parentId?: string;
+      } = {};
+
+      if (node.group) {
+        const parts = node.group.split('::');
+
+        // Check if it's a child node: "::::parent::parent-id"
+        if (parts[4] === 'parent' && parts[5]) {
+          groupInfo.isChild = true;
+          groupInfo.parentId = parts[5];
+        }
+        // Check if it's a container: "width::height::container[::locked]"
+        else if (parts[2] === 'container') {
+          groupInfo.isContainer = true;
+          groupInfo.width = parseInt(parts[0]) || 300;
+          groupInfo.height = parseInt(parts[1]) || 200;
+          groupInfo.locked = parts[3] === 'locked' || parts[4] === 'locked';
+        }
+      }
+
+      // Handle group container nodes
+      if (node.service === 'group' || groupInfo.isContainer) {
+        return {
+          id: node.id || `group-${Date.now()}-${index}`,
+          type: 'groupNode',
+          position: node.position,
+          style: {
+            width: groupInfo.width || 300,
+            height: groupInfo.height || 200,
+            zIndex: -1,
+          },
+          draggable: !groupInfo.locked,
+          selectable: true,
+          data: {
+            label: node.label || 'Group',
+            service: 'group',
+            category: 'Container',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            borderColor: '#3b82f6',
+            locked: groupInfo.locked || false,
+            hasChildren: false, // Will be set when children are bound
+            ...node.data,
+          },
+        };
+      }
+
+      // Handle regular AWS service nodes
       const iconUrl = iconResolver ? iconResolver(node.service) : null;
 
       return {
         id: node.id || `node-${Date.now()}-${index}`,
         type: 'awsNode',
         position: node.position,
+        parentNode: groupInfo.parentId, // Restore parent relationship from compact syntax
+        extent: groupInfo.parentId ? ('parent' as const) : undefined, // Add extent constraint if has parent
         data: {
           service: node.service,
           category: node.category || 'Compute',
