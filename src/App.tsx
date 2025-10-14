@@ -6,6 +6,8 @@ import DiagramPage from './pages/DiagramPage';
 function App() {
   return (
     <ThemeProvider>
+      <title>AWSMesh - Visualize Your AWS Infrastructure</title>
+      <meta name="description" content="An intuitive drag-and-drop tool to design, visualize, and manage your AWS cloud architecture with AWSMesh." />
       <DiagramProvider>
         <Router>
           <Routes>
