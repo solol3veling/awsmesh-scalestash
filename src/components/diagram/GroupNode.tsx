@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { NodeResizer } from 'reactflow';
+import { NodeResizer, Handle, Position } from 'reactflow';
 import type { Node } from 'reactflow';
 import type { NodeData } from '../../types/diagram';
 import OptionsBubble from './OptionsBubble';
@@ -55,6 +55,7 @@ const GroupNode: React.FC<GroupNodeProps> = ({ data, selected, id }) => {
   const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
   const [isTransparent, setIsTransparent] = useState(true);
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+  const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
   const colorButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleLabelSubmit = () => {
@@ -137,6 +138,75 @@ const GroupNode: React.FC<GroupNodeProps> = ({ data, selected, id }) => {
   const isLocked = data.locked || false;
   const backgroundColor = data.backgroundColor || 'rgba(59, 130, 246, 0.05)';
   const borderColor = data.borderColor || '#3b82f6';
+
+  const showConnectors = isHovered || selected || data.isConnecting;
+
+  // Render a connection point - simplified to match AWS node structure
+  const renderHandle = (position: Position, pointNumber: number, baseId: string) => {
+    const handleId = `${baseId}-${pointNumber}`;
+    const isHandleHovered = hoveredHandle === handleId;
+
+    // Calculate position percentage
+    const positions = [25, 50, 75]; // Spread them out more
+    const percent = positions[pointNumber - 1] || 50;
+
+    // Define offset for each position
+    let styleOverrides: React.CSSProperties = {};
+
+    switch (position) {
+      case Position.Top:
+        styleOverrides = {
+          top: '-10px',
+          left: `${percent}%`,
+          transform: 'translateX(-50%)',
+        };
+        break;
+      case Position.Right:
+        styleOverrides = {
+          right: '-10px',
+          top: `${percent}%`,
+          transform: 'translateY(-50%)',
+        };
+        break;
+      case Position.Bottom:
+        styleOverrides = {
+          bottom: '-10px',
+          left: `${percent}%`,
+          transform: 'translateX(-50%)',
+        };
+        break;
+      case Position.Left:
+        styleOverrides = {
+          left: '-10px',
+          top: `${percent}%`,
+          transform: 'translateY(-50%)',
+        };
+        break;
+    }
+
+    return (
+      <Handle
+        key={handleId}
+        type="source"
+        position={position}
+        id={handleId}
+        onMouseEnter={() => setHoveredHandle(handleId)}
+        onMouseLeave={() => setHoveredHandle(null)}
+        style={{
+          ...styleOverrides,
+          width: isHandleHovered ? '10px' : '7px',
+          height: isHandleHovered ? '10px' : '7px',
+          border: `2px solid ${borderColor}`,
+          borderRadius: '50%',
+          background: isHandleHovered ? borderColor : '#ffffff',
+          opacity: showConnectors ? 1 : 0,
+          transition: 'all 200ms ease-in-out',
+          cursor: isLocked ? 'not-allowed' : 'crosshair',
+        }}
+        isConnectable={!isLocked}
+      />
+    );
+  };
 
   return (
     <div
@@ -357,7 +427,7 @@ const GroupNode: React.FC<GroupNodeProps> = ({ data, selected, id }) => {
 
       {/* Group container */}
       <div
-        className="w-full h-full rounded-lg transition-all"
+        className="w-full h-full rounded-lg transition-all relative"
         style={{
           backgroundColor,
           borderColor: (selected || isHovered) ? borderColor : 'transparent',
@@ -365,6 +435,26 @@ const GroupNode: React.FC<GroupNodeProps> = ({ data, selected, id }) => {
           borderStyle: isLocked ? 'dashed' : 'solid',
         }}
       >
+        {/* Connection Handles - Top edge */}
+        {renderHandle(Position.Top, 1, 'top')}
+        {renderHandle(Position.Top, 2, 'top')}
+        {renderHandle(Position.Top, 3, 'top')}
+
+        {/* Right edge */}
+        {renderHandle(Position.Right, 1, 'right')}
+        {renderHandle(Position.Right, 2, 'right')}
+        {renderHandle(Position.Right, 3, 'right')}
+
+        {/* Bottom edge */}
+        {renderHandle(Position.Bottom, 1, 'bottom')}
+        {renderHandle(Position.Bottom, 2, 'bottom')}
+        {renderHandle(Position.Bottom, 3, 'bottom')}
+
+        {/* Left edge */}
+        {renderHandle(Position.Left, 1, 'left')}
+        {renderHandle(Position.Left, 2, 'left')}
+        {renderHandle(Position.Left, 3, 'left')}
+
         {/* Label badge at the top - vertically centered on border */}
         <div className="absolute left-3 z-20" style={{ top: '-9px' }}>
           {isEditing ? (
