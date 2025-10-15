@@ -52,6 +52,17 @@ const UploadModal: React.FC<UploadModalProps> = ({ show, onClose, onProcessJSON,
 
       setUploadProgress(100);
 
+      // Track successful diagram generation from pasted JSON
+      if (window.plausible) {
+        window.plausible('AI Diagram Generated', {
+          props: {
+            method: 'Paste JSON',
+            nodeCount: jsonData.nodes?.length || 0,
+            connectionCount: jsonData.connections?.length || 0,
+          }
+        });
+      }
+
       // Wait a bit to show 100% before closing
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -63,6 +74,16 @@ const UploadModal: React.FC<UploadModalProps> = ({ show, onClose, onProcessJSON,
       console.error('Error loading JSON:', error);
       alert('Error loading JSON. Please try again.');
       setIsGenerating(false);
+
+      // Track failed attempt
+      if (window.plausible) {
+        window.plausible('AI Diagram Failed', {
+          props: {
+            method: 'Paste JSON',
+            error: 'Parse Error'
+          }
+        });
+      }
     }
   };
 
@@ -98,6 +119,18 @@ const UploadModal: React.FC<UploadModalProps> = ({ show, onClose, onProcessJSON,
 
         setUploadProgress(100);
 
+        // Track successful diagram generation from file upload
+        if (window.plausible) {
+          window.plausible('AI Diagram Generated', {
+            props: {
+              method: 'Upload File',
+              nodeCount: jsonData.nodes?.length || 0,
+              connectionCount: jsonData.connections?.length || 0,
+              fileSize: Math.round(file.size / 1024) + 'KB',
+            }
+          });
+        }
+
         // Wait a bit to show 100% before closing
         await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -108,6 +141,16 @@ const UploadModal: React.FC<UploadModalProps> = ({ show, onClose, onProcessJSON,
         console.error('Error loading JSON:', error);
         alert('Error parsing JSON file. Please check the file format.');
         setIsGenerating(false);
+
+        // Track failed attempt
+        if (window.plausible) {
+          window.plausible('AI Diagram Failed', {
+            props: {
+              method: 'Upload File',
+              error: 'Parse Error'
+            }
+          });
+        }
       }
     };
     reader.readAsText(file);
