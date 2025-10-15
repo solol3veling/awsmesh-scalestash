@@ -5,14 +5,34 @@ import ServicePalette from '../components/icons/ServicePalette';
 import CodeEditor from '../components/editor/CodeEditor';
 import PersistenceIndicator from '../components/common/PersistenceIndicator';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import WelcomeModal from '../components/common/WelcomeModal';
 import { useDiagram } from '../context/DiagramContext';
 import { useDiagramPersistence } from '../hooks/useDiagramPersistence';
 
+const WELCOME_MODAL_KEY = 'awsmesh_welcome_seen';
+
 const DiagramPage: React.FC = () => {
   const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Check if user has seen the welcome modal
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_KEY);
+    if (!hasSeenWelcome) {
+      setShowWelcomeModal(true);
+    }
+  }, []);
+
+  const handleCloseWelcome = () => {
+    localStorage.setItem(WELCOME_MODAL_KEY, 'true');
+    setShowWelcomeModal(false);
+  };
 
   return (
     <div className="h-screen flex flex-col relative">
+      {/* Welcome Modal for First-Time Users */}
+      {showWelcomeModal && <WelcomeModal onClose={handleCloseWelcome} />}
+
       <ServicePalette
         showCodeEditor={showCodeEditor}
         setShowCodeEditor={setShowCodeEditor}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { initIconCache, preloadIcons, clearExpiredCache } from '../utils/iconCache';
 
 export interface IconVariant {
   size: number;
@@ -40,6 +41,13 @@ export const useIconsManifest = () => {
     const loadManifest = async () => {
       try {
         setLoading(true);
+
+        // Initialize icon cache
+        await initIconCache();
+
+        // Clear expired cache entries
+        clearExpiredCache().catch(console.warn);
+
         const response = await fetch('/icons-manifest.json');
 
         if (!response.ok) {
@@ -49,6 +57,23 @@ export const useIconsManifest = () => {
         const data: IconsManifest = await response.json();
         setManifest(data);
         setError(null);
+
+        // Preload commonly used icons in the background
+        setTimeout(() => {
+          const iconPaths = data.services
+            .slice(0, 50) // Preload first 50 services
+            .flatMap(service => {
+              const paths: string[] = [];
+              // Get 64px icons (for sidebar)
+              if (service.sizes[64]) {
+                const icon = service.sizes[64].find(v => v.format === 'svg') || service.sizes[64][0];
+                if (icon) paths.push(icon.iconPath);
+              }
+              return paths;
+            });
+
+          preloadIcons(iconPaths).catch(console.warn);
+        }, 1000); // Delay preloading to not block initial render
       } catch (err) {
         console.error('Error loading icons manifest:', err);
         setError(err instanceof Error ? err.message : 'Failed to load icons');
