@@ -8,6 +8,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import WelcomeModal from '../components/common/WelcomeModal';
 import { useDiagram } from '../context/DiagramContext';
 import { useDiagramPersistence } from '../hooks/useDiagramPersistence';
+import { decodeDiagramFromURL } from '../utils/exportUtils';
 
 const WELCOME_MODAL_KEY = 'awsmesh_welcome_seen';
 
@@ -53,6 +54,8 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
   const [hasLoadedInitialState, setHasLoadedInitialState] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showSharedLinkModal, setShowSharedLinkModal] = useState(false);
+  const [pendingSharedDiagram, setPendingSharedDiagram] = useState<any>(null);
 
   const {
     hasPersistedState,
@@ -68,22 +71,59 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
     debounceMs: 1000,
   });
 
-  // Load persisted state on mount
+  // Load persisted state on mount, or load from URL if shared link
   useEffect(() => {
     if (hasLoadedInitialState) return;
 
-    const persistedState = loadPersistedState();
-    if (persistedState) {
-      setNodes(persistedState.nodes);
-      setEdges(persistedState.edges);
-      console.log('Loaded persisted state:', {
-        nodes: persistedState.nodes.length,
-        edges: persistedState.edges.length,
-      });
+    // First, check if there's a shared diagram in the URL
+    const sharedDiagram = decodeDiagramFromURL();
+
+    if (sharedDiagram) {
+      // Check if there's existing work (persisted state or current nodes)
+      const persistedState = loadPersistedState();
+      const hasExistingWork = persistedState || nodes.length > 0;
+
+      if (hasExistingWork) {
+        // Show confirmation modal
+        setPendingSharedDiagram(sharedDiagram);
+        setShowSharedLinkModal(true);
+      } else {
+        // No existing work, load directly
+        setNodes(sharedDiagram.nodes);
+        setEdges(sharedDiagram.edges);
+        console.log('Loaded diagram from shared URL:', {
+          nodes: sharedDiagram.nodes.length,
+          edges: sharedDiagram.edges.length,
+        });
+
+        // Track with Plausible
+        if (window.plausible) {
+          window.plausible('Shared Diagram Opened', {
+            props: {
+              nodeCount: sharedDiagram.nodes.length,
+              edgeCount: sharedDiagram.edges.length,
+            }
+          });
+        }
+
+        // Clean up URL without reloading the page
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } else {
+      // Load from local storage if available
+      const persistedState = loadPersistedState();
+      if (persistedState) {
+        setNodes(persistedState.nodes);
+        setEdges(persistedState.edges);
+        console.log('Loaded persisted state:', {
+          nodes: persistedState.nodes.length,
+          edges: persistedState.edges.length,
+        });
+      }
     }
 
     setHasLoadedInitialState(true);
-  }, [hasLoadedInitialState, loadPersistedState, setNodes, setEdges]);
+  }, [hasLoadedInitialState, loadPersistedState, setNodes, setEdges, nodes.length]);
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -174,6 +214,47 @@ const DiagramPageContent: React.FC<{ showCodeEditor: boolean }> = ({ showCodeEdi
         }}
         onCancel={() => {
           setShowRestoreModal(false);
+        }}
+      />
+
+      {/* Shared Link Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showSharedLinkModal}
+        title="Load Shared Diagram?"
+        message={`You have existing work saved. Loading this shared diagram will replace your current work. Continue?`}
+        confirmText="Load Shared Diagram"
+        cancelText="Keep Current Work"
+        variant="warning"
+        onConfirm={() => {
+          setShowSharedLinkModal(false);
+          if (pendingSharedDiagram) {
+            setNodes(pendingSharedDiagram.nodes);
+            setEdges(pendingSharedDiagram.edges);
+            console.log('Loaded diagram from shared URL:', {
+              nodes: pendingSharedDiagram.nodes.length,
+              edges: pendingSharedDiagram.edges.length,
+            });
+
+            // Track with Plausible
+            if (window.plausible) {
+              window.plausible('Shared Diagram Opened', {
+                props: {
+                  nodeCount: pendingSharedDiagram.nodes.length,
+                  edgeCount: pendingSharedDiagram.edges.length,
+                }
+              });
+            }
+
+            // Clean up URL without reloading the page
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+          setPendingSharedDiagram(null);
+        }}
+        onCancel={() => {
+          setShowSharedLinkModal(false);
+          setPendingSharedDiagram(null);
+          // Clean up URL without loading the diagram
+          window.history.replaceState({}, document.title, window.location.pathname);
         }}
       />
     </>

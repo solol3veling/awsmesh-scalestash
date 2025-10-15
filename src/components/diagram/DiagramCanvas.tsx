@@ -194,7 +194,7 @@ const DiagramCanvas: React.FC = () => {
   );
 
   return (
-    <div ref={reactFlowWrapper} className="w-full h-full">
+    <div ref={reactFlowWrapper} className="w-full h-full" id="diagram-canvas">
       <ReactFlow
         nodes={nodesWithCallbacks}
         edges={edgesWithStyle}
