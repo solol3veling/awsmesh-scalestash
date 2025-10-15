@@ -134,7 +134,7 @@ const getServiceIdFromNode = (node: Node): string => {
 export const exportAsJSON = (
   nodes: Node[],
   edges: Edge[],
-  dsl?: string,
+  _dsl?: any,
   filename: string = 'aws-diagram'
 ): void => {
   // Convert to simple format

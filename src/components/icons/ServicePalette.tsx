@@ -4,7 +4,7 @@ import { useIconsManifest } from '../../hooks/useIconsManifest';
 import { useTheme } from '../../context/ThemeContext';
 import ConfirmationModal from '../common/ConfirmationModal';
 import ExportModal from '../common/ExportModal';
-import { getUniformServiceId, createIconResolver } from '../../utils/serviceUtils';
+import { createIconResolver } from '../../utils/serviceUtils';
 import { generateReadmeContent, downloadReadme } from '../../utils/readmeGenerator';
 import UploadModal from './modals/UploadModal';
 import InfoModal from './modals/InfoModal';

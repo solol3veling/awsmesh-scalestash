@@ -8,7 +8,7 @@ interface ExportModalProps {
   onClose: () => void;
   nodes: Node[];
   edges: Edge[];
-  dsl?: string;
+  dsl?: any;
 }
 
 const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, nodes, edges, dsl }) => {
