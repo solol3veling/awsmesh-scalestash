@@ -2,11 +2,6 @@
 const CACHE_NAME = 'awsmesh-icons-v1';
 const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
-interface CacheMetadata {
-  url: string;
-  timestamp: number;
-}
-
 // Initialize cache storage
 export const initIconCache = async (): Promise<void> => {
   try {
