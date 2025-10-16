@@ -58,12 +58,27 @@ export const generateReadmeContent = (services: AWSService[]): string => {
 - \`group\`: Parent relationship (optional, see Groups section)
 
 ### Group Container Nodes (VPC, Subnet, etc.)
+
+**Option 1: Generic Group Container**
 - \`service\`: "group" (required)
 - \`label\`: Group name (e.g., "VPC", "Public Subnet")
 - \`position\`: Coordinates \`{ x, y }\` in pixels
 - \`group\`: Format \`"width::height::container[::locked]"\`
   - Example: \`"600::400::container"\` - 600x400px unlocked group
   - Example: \`"500::300::container::locked"\` - Locked group (cannot be moved)
+
+**Option 2: Specific Group Icons (with AWS icons)**
+Use these specific group service IDs for containers with proper AWS icons:
+- \`service\`: "private-subnet" - Private subnet container
+- \`service\`: "public-subnet" - Public subnet container  
+- \`service\`: "region" - AWS region container
+- \`service\`: "aws-cloud" - AWS cloud container
+- \`service\`: "aws-account" - AWS account container
+- \`service\`: "auto-scaling-group" - Auto scaling group container
+- \`service\`: "corporate-data-center" - Corporate data center container
+- \`service\`: "ec2-instance-contents" - EC2 instance contents container
+
+**Note**: When using specific group icons, you still need the \`group\` field for container behavior.
 
 ### Child Nodes (inside groups)
 - Include all regular node fields
@@ -167,6 +182,19 @@ Groups are containers that can hold other AWS service nodes.
 - arch::other::aws-secrets-manager
 - arch::other::aws-waf
 
+### GROUP CONTAINER SERVICES (Special containers with AWS icons)
+
+**IMPORTANT: These are special group services that can act as containers:**
+
+- private-subnet
+- public-subnet
+- region
+- aws-cloud
+- aws-account
+- auto-scaling-group
+- corporate-data-center
+- ec2-instance-contents
+
 ### COMPLETE SERVICE LIST (${services.filter(s => s.sizes[64]).length} services)
 
 ${services
@@ -220,7 +248,64 @@ ${services
 }
 \`\`\`
 
-## Example 2: Multiple connections from same node (using custom handles)
+## Example 2: Using Specific Group Icons (VPC, Subnets with AWS Icons)
+
+\`\`\`json
+{
+  "nodes": [
+    {
+      "service": "region",
+      "label": "us-east-1",
+      "position": { "x": 0, "y": 0 },
+      "group": "800::600::container::locked",
+      "id": "region"
+    },
+    {
+      "service": "aws-cloud",
+      "label": "VPC",
+      "position": { "x": 50, "y": 50 },
+      "group": "700::500::container",
+      "id": "vpc"
+    },
+    {
+      "service": "public-subnet",
+      "label": "Public Subnet",
+      "position": { "x": 100, "y": 100 },
+      "group": "300::150::container",
+      "id": "public-subnet"
+    },
+    {
+      "service": "private-subnet",
+      "label": "Private Subnet",
+      "position": { "x": 450, "y": 100 },
+      "group": "300::150::container",
+      "id": "private-subnet"
+    },
+    {
+      "service": "arch::other::amazon-ec2",
+      "label": "Web Server",
+      "position": { "x": 150, "y": 150 },
+      "group": "::::parent::public-subnet"
+    },
+    {
+      "service": "arch::other::amazon-rds",
+      "label": "Database",
+      "position": { "x": 500, "y": 150 },
+      "group": "::::parent::private-subnet"
+    }
+  ],
+  "connections": [
+    {
+      "source": 4,
+      "target": 5,
+      "flow": "horizontal",
+      "label": "queries"
+    }
+  ]
+}
+\`\`\`
+
+## Example 3: Multiple connections from same node (using custom handles)
 
 \`\`\`json
 {
