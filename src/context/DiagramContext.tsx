@@ -234,8 +234,76 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   }, []);
 
   const removeNode = useCallback((nodeId: string) => {
-    setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-    setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+    setNodes((nds) => {
+      const nodeToDelete = nds.find((n) => n.id === nodeId);
+      if (!nodeToDelete) return nds;
+
+      // Handle group node deletion
+      if (nodeToDelete.type === 'groupNode') {
+        const isLocked = nodeToDelete.data?.locked === true;
+        const childNodes = nds.filter((n) => n.parentNode === nodeId);
+        
+        console.log('Deleting group node:', {
+          nodeId,
+          isLocked,
+          lockedValue: nodeToDelete.data?.locked,
+          childCount: childNodes.length,
+          childIds: childNodes.map(n => n.id)
+        });
+
+        if (isLocked) {
+          // LOCKED GROUP: Delete group AND all its children
+          const childIds = childNodes.map((n) => n.id);
+          const nodesToKeep = nds.filter((n) => 
+            n.id !== nodeId && // Remove the group
+            !childIds.includes(n.id) // Remove all children
+          );
+          
+          // Also remove edges connected to deleted children
+          setEdges((eds) => eds.filter((e) => 
+            e.source !== nodeId && 
+            e.target !== nodeId &&
+            !childIds.includes(e.source) &&
+            !childIds.includes(e.target)
+          ));
+          
+          return nodesToKeep;
+        } else {
+          // UNLOCKED GROUP: Delete only the group, unbind children
+          const unboundChildren = childNodes.map((child) => {
+            // Convert relative position back to absolute
+            const absolutePosition = {
+              x: child.position.x + nodeToDelete.position.x,
+              y: child.position.y + nodeToDelete.position.y,
+            };
+
+            return {
+              ...child,
+              parentNode: undefined,
+              position: absolutePosition,
+              extent: undefined,
+            };
+          });
+
+          // Remove the group and replace children with unbound versions
+          const otherNodes = nds.filter((n) => n.id !== nodeId && n.parentNode !== nodeId);
+          const updatedNodes = [...otherNodes, ...unboundChildren];
+          
+          // Remove edges connected to the group only
+          setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+          
+          return updatedNodes;
+        }
+      } else {
+        // Handle regular node deletion
+        const updatedNodes = nds.filter((n) => n.id !== nodeId);
+        
+        // Remove edges connected to this node
+        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+        
+        return updatedNodes;
+      }
+    });
   }, []);
 
   const duplicateNode = useCallback((nodeId: string) => {
@@ -300,13 +368,116 @@ export const DiagramProvider: React.FC<DiagramProviderProps> = ({ children }) =>
   }, []);
 
   const toggleNodeLock = useCallback((nodeId: string) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, locked: !node.data.locked }, draggable: node.data.locked }
-          : node
-      )
-    );
+    setNodes((nds) => {
+      const nodeToToggle = nds.find((n) => n.id === nodeId);
+      if (!nodeToToggle || nodeToToggle.type !== 'groupNode') {
+        // For non-group nodes, just toggle lock state
+        return nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, locked: !node.data.locked }, draggable: node.data.locked }
+            : node
+        );
+      }
+
+      const currentlyLocked = nodeToToggle.data?.locked || false;
+      const willBeLocked = !currentlyLocked;
+
+      console.log('Toggling group lock:', {
+        nodeId,
+        currentlyLocked,
+        willBeLocked
+      });
+
+      if (willBeLocked) {
+        // LOCKING: Bind children to group automatically
+        const groupBounds = {
+          left: nodeToToggle.position.x,
+          right: nodeToToggle.position.x + (nodeToToggle.style?.width as number || 300),
+          top: nodeToToggle.position.y,
+          bottom: nodeToToggle.position.y + (nodeToToggle.style?.height as number || 200),
+        };
+
+        return nds.map((node) => {
+          // Update the group node - lock it and mark as having children
+          if (node.id === nodeId) {
+            return { 
+              ...node, 
+              data: { ...node.data, locked: true, hasChildren: true }, 
+              draggable: false 
+            };
+          }
+
+          // Check if node is within group bounds and bind it
+          const nodeCenter = {
+            x: node.position.x + 40, // Approximate node center
+            y: node.position.y + 40,
+          };
+
+          const isInside =
+            nodeCenter.x >= groupBounds.left &&
+            nodeCenter.x <= groupBounds.right &&
+            nodeCenter.y >= groupBounds.top &&
+            nodeCenter.y <= groupBounds.bottom;
+
+          if (isInside && node.type === 'awsNode' && !node.parentNode) {
+            // Calculate relative position to group
+            const relativePosition = {
+              x: node.position.x - nodeToToggle.position.x,
+              y: node.position.y - nodeToToggle.position.y,
+            };
+
+            console.log('Auto-binding node to locked group:', {
+              nodeId: node.id,
+              relativePosition
+            });
+
+            return {
+              ...node,
+              parentNode: nodeId,
+              position: relativePosition,
+              extent: 'parent' as const,
+            };
+          }
+
+          return node;
+        });
+      } else {
+        // UNLOCKING: Unbind children from group automatically
+        return nds.map((node) => {
+          // Update the group node - unlock it and mark as not having children
+          if (node.id === nodeId) {
+            return { 
+              ...node, 
+              data: { ...node.data, locked: false, hasChildren: false }, 
+              draggable: true 
+            };
+          }
+
+          // Unbind children
+          if (node.parentNode === nodeId) {
+            // Convert relative position back to absolute
+            const absolutePosition = {
+              x: node.position.x + nodeToToggle.position.x,
+              y: node.position.y + nodeToToggle.position.y,
+            };
+
+            console.log('Auto-unbinding node from unlocked group:', {
+              nodeId: node.id,
+              absolutePosition
+            });
+
+            return {
+              ...node,
+              parentNode: undefined,
+              position: absolutePosition,
+              extent: undefined,
+            };
+          }
+
+          return node;
+        });
+      }
+    });
   }, []);
 
   const bindChildrenToGroup = useCallback((groupId: string) => {

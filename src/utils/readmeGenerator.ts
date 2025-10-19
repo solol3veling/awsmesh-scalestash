@@ -53,8 +53,45 @@ Generate AWS architecture diagrams using ONLY this specification. Follow all rul
 ## AWS HIERARCHY
 AWS Cloud → Region → VPC → AZ → Subnet → Services
 
-## CONNECTION FLOWS
-horizontal, vertical, diagonal-down, diagonal-up
+## CONNECTION FLOWS & HANDLES
+
+### Node Handle System
+Each node has **12 connection handles** (3 per side):
+\`\`\`
+        top-1   top-2   top-3
+           •      •      •
+    left-1 •              • right-1
+    left-2 •    [NODE]    • right-2  
+    left-3 •              • right-3
+           •      •      •
+      bottom-1  bottom-2  bottom-3
+\`\`\`
+
+### Connection Flow Options
+
+**Option 1: Semantic Keywords (Recommended)**
+- \`horizontal\` - Right to left (right-2 → left-2)
+- \`horizontal-reverse\` - Left to right (left-2 → right-2)
+- \`vertical\` - Top to bottom (bottom-2 → top-2)
+- \`vertical-reverse\` - Bottom to top (top-2 → bottom-2)
+- \`diagonal-down\` - Diagonal downward (bottom-2 → right-2)
+- \`diagonal-up\` - Diagonal upward (top-2 → right-2)
+- \`l-shape-down\` - L-shaped down (right-2 → top-2)
+- \`l-shape-up\` - L-shaped up (right-2 → bottom-2)
+- \`l-shape-left-down\` - L-shaped left down (left-2 → top-2)
+- \`l-shape-left-up\` - L-shaped left up (left-2 → bottom-2)
+
+**Option 2: Custom Handle Format**
+Format: \`"sourceDirection::targetDirection::sourceHandle::targetHandle"\`
+
+**Directions**: \`top\`, \`right\`, \`bottom\`, \`left\`
+**Handle Numbers**: \`1\`, \`2\`, \`3\` (where 2 is middle)
+
+**Examples:**
+- \`"right::left"\` - Right middle to left middle (right-2 → left-2)
+- \`"right::left::1::3"\` - Right top to left bottom (right-1 → left-3)
+- \`"top::bottom::2::1"\` - Top middle to bottom top (top-2 → bottom-1)
+- \`"bottom::right::3::2"\` - Bottom bottom to right middle (bottom-3 → right-2)
 
 ## EXAMPLE: Simple 3-Tier
 \`\`\`json
@@ -189,6 +226,77 @@ horizontal, vertical, diagonal-down, diagonal-up
     }
   ],
   "connections": []
+}
+\`\`\`
+
+## EXAMPLE: Multiple Connection Types & Handles
+\`\`\`json
+{
+  "nodes": [
+    {
+      "service": "arch::other::amazon-api-gateway",
+      "label": "API Gateway",
+      "position": { "x": 100, "y": 200 }
+    },
+    {
+      "service": "arch::other::amazon-ec2",
+      "label": "Web Server 1",
+      "position": { "x": 400, "y": 100 }
+    },
+    {
+      "service": "arch::other::amazon-ec2",
+      "label": "Web Server 2",
+      "position": { "x": 400, "y": 200 }
+    },
+    {
+      "service": "arch::other::amazon-ec2",
+      "label": "Web Server 3",
+      "position": { "x": 400, "y": 300 }
+    },
+    {
+      "service": "arch::other::amazon-rds",
+      "label": "Database",
+      "position": { "x": 700, "y": 200 }
+    }
+  ],
+  "connections": [
+    {
+      "source": 0,
+      "target": 1,
+      "flow": "right::left::1::2",
+      "label": "route to server 1"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "flow": "horizontal",
+      "label": "route to server 2"
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "flow": "right::left::3::2",
+      "label": "route to server 3"
+    },
+    {
+      "source": 1,
+      "target": 4,
+      "flow": "diagonal-down",
+      "label": "query db"
+    },
+    {
+      "source": 2,
+      "target": 4,
+      "flow": "right::left",
+      "label": "query db"
+    },
+    {
+      "source": 3,
+      "target": 4,
+      "flow": "diagonal-up",
+      "label": "query db"
+    }
+  ]
 }
 \`\`\`
 
