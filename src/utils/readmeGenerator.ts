@@ -39,16 +39,42 @@ Generate AWS architecture diagrams using ONLY this specification. Follow all rul
 \`\`\`
 
 ## WRONG vs CORRECT
+
+**SERVICE FORMAT ERRORS:**
 - WRONG: "arch::database::amazon-dynamodb" → CORRECT: "arch::other::amazon-dynamodb"
 - WRONG: "arch::compute::amazon-ec2" → CORRECT: "arch::other::amazon-ec2"
 - WRONG: "source": "0" (string) → CORRECT: "source": 0 (number)
 
+**GROUP SERVICE ERRORS:**
+- WRONG: "arch::other::private-subnet" → CORRECT: "private-subnet"
+- WRONG: "arch::other::public-subnet" → CORRECT: "public-subnet"
+- WRONG: "arch::other::region" → CORRECT: "region"
+- WRONG: "arch::other::aws-cloud" → CORRECT: "aws-cloud"
+- WRONG: "arch::other::auto-scaling-group" → CORRECT: "auto-scaling-group"
+
+**CRITICAL**: Group services do NOT use the "arch::other::" prefix!
+
 ## GROUP CONTAINERS
-- Generic: "service": "group"
-- AWS Icons: private-subnet, public-subnet, region, aws-cloud, auto-scaling-group
-- Format: "group": "width::height::container[::locked]"
-- Parent: "group": "::::parent::parent-id"
-- Note: All group services can contain other AWS services as children
+
+**CRITICAL: These are GROUP SERVICES, NOT regular AWS services!**
+
+### Group Service IDs (Use as "service" field):
+- \`private-subnet\` - Private subnet container (NOT an AWS service)
+- \`public-subnet\` - Public subnet container (NOT an AWS service)  
+- \`region\` - AWS region container (NOT an AWS service)
+- \`aws-cloud\` - AWS cloud container (NOT an AWS service)
+- \`auto-scaling-group\` - Auto scaling group container (NOT an AWS service)
+- \`aws-account\` - AWS account container (NOT an AWS service)
+- \`corporate-data-center\` - Corporate data center container (NOT an AWS service)
+- \`ec2-instance-contents\` - EC2 instance contents container (NOT an AWS service)
+- \`group\` - Generic group container (no icon)
+
+### Group Container Format:
+- \`"service": "private-subnet"\` (use the exact group service ID)
+- \`"group": "width::height::container[::locked]"\` (container behavior)
+- \`"group": "::::parent::parent-id"\` (for child nodes)
+
+**IMPORTANT**: Group services are containers that hold other AWS services, they are NOT regular AWS services!
 
 ## AWS HIERARCHY
 AWS Cloud → Region → VPC → AZ → Subnet → Services
@@ -93,7 +119,61 @@ Format: \`"sourceDirection::targetDirection::sourceHandle::targetHandle"\`
 - \`"top::bottom::2::1"\` - Top middle to bottom top (top-2 → bottom-1)
 - \`"bottom::right::3::2"\` - Bottom bottom to right middle (bottom-3 → right-2)
 
-## EXAMPLE: Simple 3-Tier
+### CRITICAL: Avoiding Label Overlaps
+
+**Spacing Rules for Clean Diagrams:**
+1. **Minimum Node Spacing**: 150px horizontal, 120px vertical between nodes
+2. **Connection Label Strategy**: Use short, clear labels (max 15 characters)
+3. **Handle Selection**: Use different handles for multiple connections from same node
+4. **Label Positioning**: Avoid crossing connections when possible
+
+**Label Best Practices:**
+- Use: "queries", "routes to", "stores", "auth", "data flow"
+- Avoid: "sends database queries to retrieve user information"
+- Keep labels under 15 characters for readability
+
+**Handle Strategy for Multiple Connections:**
+When one node connects to multiple targets, use different handles:
+\`\`\`json
+{
+  "connections": [
+    {
+      "source": 0,
+      "target": 1,
+      "flow": "right::left::1::2",
+      "label": "auth"
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "flow": "right::left::2::2",
+      "label": "data"
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "flow": "right::left::3::2",
+      "label": "logs"
+    }
+  ]
+}
+\`\`\`
+
+## POSITIONING GUIDELINES FOR CLEAN LAYOUTS
+
+**Node Spacing Rules:**
+- **Horizontal spacing**: Minimum 150px between nodes
+- **Vertical spacing**: Minimum 120px between nodes  
+- **Container margins**: 50px margin inside containers
+- **Multi-tier layouts**: 200px between tiers (web → app → db)
+
+**Connection Planning:**
+- **Avoid crossing connections** when possible
+- **Use different handles** for multiple connections from same source
+- **Keep labels short** (under 15 characters)
+- **Plan connection paths** to minimize overlaps
+
+## EXAMPLE: Simple 3-Tier (Proper Spacing)
 \`\`\`json
 {
   "nodes": [
@@ -101,7 +181,7 @@ Format: \`"sourceDirection::targetDirection::sourceHandle::targetHandle"\`
       "service": "group",
       "label": "VPC",
       "position": { "x": 0, "y": 0 },
-      "group": "600::400::container::locked",
+      "group": "700::300::container::locked",
       "id": "vpc"
     },
     {
@@ -113,7 +193,7 @@ Format: \`"sourceDirection::targetDirection::sourceHandle::targetHandle"\`
     {
       "service": "arch::other::amazon-rds",
       "label": "Database",
-      "position": { "x": 300, "y": 100 }
+      "position": { "x": 400, "y": 50 }
     }
   ],
   "connections": [

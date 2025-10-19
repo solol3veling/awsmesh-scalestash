@@ -43,23 +43,9 @@ const CodeEditor: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
-      <div className="p-3 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+    <div className="h-full flex flex-col bg-gray-900 relative">
+      <div className="p-3 bg-gray-800 border-b border-gray-700">
         <h3 className="text-white font-semibold">DSL JSON Editor</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={handleApplyChanges}
-            className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-          >
-            Apply Changes
-          </button>
-          <button
-            onClick={handleDownload}
-            className="px-4 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-          >
-            Download JSON
-          </button>
-        </div>
       </div>
 
       {error && (
@@ -82,6 +68,22 @@ const CodeEditor: React.FC = () => {
             formatOnType: true,
           }}
         />
+      </div>
+
+      {/* Buttons moved to bottom left */}
+      <div className="absolute bottom-4 left-4 flex gap-2 z-10 max-w-[200px]">
+        <button
+          onClick={handleApplyChanges}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium shadow-lg transition-colors"
+        >
+          Apply Changes
+        </button>
+        <button
+          onClick={handleDownload}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium shadow-lg transition-colors"
+        >
+          Download JSON
+        </button>
       </div>
     </div>
   );
