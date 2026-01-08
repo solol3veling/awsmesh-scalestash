@@ -2,5 +2,9 @@
 User-agent: *
 Allow: /
 
-# Point to the sitemap
-Sitemap: /sitemap.xml
+# Block any future admin/auth pages
+Disallow: /admin/
+Disallow: /api/
+
+# Point to the sitemap (absolute URL)
+Sitemap: https://awsmesh.scalestash.com/sitemap.xml
