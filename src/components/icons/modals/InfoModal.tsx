@@ -38,7 +38,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
               className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
                 theme === 'dark'
                   ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-[#ff9900] hover:bg-[#ff8800] text-white'
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,17 +89,17 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
                 Service Format
               </h3>
               <p className="text-sm mb-3">
-                Each node requires a <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>service</code> field with this format:
+                Each node requires a <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>service</code> field with this format:
               </p>
               <code className={`block px-4 py-2 rounded-lg text-sm ${
                 theme === 'dark'
                   ? 'bg-[#1a252f] text-[#ff9900]'
-                  : 'bg-gray-100 text-blue-600'
+                  : 'bg-gray-100 text-[#ff9900]'
               }`}>
                 arch::other::service-name
               </code>
               <p className="text-sm mt-2">
-                Example: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>
+                Example: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>
                   arch::other::amazon-ec2
                 </code>
               </p>
@@ -136,8 +136,8 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
 
               <p className="text-sm font-semibold mb-2">Group Field Format:</p>
               <ul className="text-xs space-y-1 mb-3">
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"width::height::container"</code> - Unlocked group</li>
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"width::height::container::locked"</code> - Locked group (cannot be moved)</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"width::height::container"</code> - Unlocked group</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"width::height::container::locked"</code> - Locked group (cannot be moved)</li>
               </ul>
 
               <p className="text-sm font-semibold mb-2">Adding Nodes Inside Groups:</p>
@@ -154,8 +154,8 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
 }`}
               </pre>
               <ul className="text-xs space-y-1">
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"::::parent::0"</code> - Makes node a child of node at index 0</li>
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"::::parent::vpc-1"</code> - Makes node a child of node with id "vpc-1"</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"::::parent::0"</code> - Makes node a child of node at index 0</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"::::parent::vpc-1"</code> - Makes node a child of node with id "vpc-1"</li>
                 <li>• Child positions are relative to parent's top-left corner</li>
               </ul>
             </div>
@@ -195,17 +195,17 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
                 <strong>Option 1: Semantic keywords</strong> (easiest for AI):
               </p>
               <ul className="text-xs space-y-1 mb-3">
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"horizontal"</code> - Right to left flow</li>
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"vertical"</code> - Top to bottom flow</li>
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"diagonal-down"</code>, <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"diagonal-up"</code> - Diagonal flows</li>
-                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"l-shape-down"</code>, <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"l-shape-up"</code> - L-shaped connections</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"horizontal"</code> - Right to left flow</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"vertical"</code> - Top to bottom flow</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"diagonal-down"</code>, <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"diagonal-up"</code> - Diagonal flows</li>
+                <li>• <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"l-shape-down"</code>, <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"l-shape-up"</code> - L-shaped connections</li>
               </ul>
               <p className="text-sm font-semibold mb-2">
                 <strong>Option 2: Custom format</strong> (precise control):
               </p>
               <ul className="text-xs space-y-1 mb-2">
-                <li>• Full: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"right::left::1::3"</code> = right-1 → left-3</li>
-                <li>• Short: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-blue-600'}>"right::left"</code> = right-2 → left-2 (uses middle handles)</li>
+                <li>• Full: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"right::left::1::3"</code> = right-1 → left-3</li>
+                <li>• Short: <code className={theme === 'dark' ? 'text-[#ff9900]' : 'text-[#ff9900]'}>"right::left"</code> = right-2 → left-2 (uses middle handles)</li>
               </ul>
             </div>
 
@@ -329,7 +329,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, onDownloadReadme, 
                 className={`w-full px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                   theme === 'dark'
                     ? 'bg-[#ff9900] hover:bg-[#ff9900]/90 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-[#ff9900] hover:bg-[#ff8800] text-white'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

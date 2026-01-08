@@ -228,6 +228,7 @@ const DiagramCanvas: React.FC = () => {
         maxZoom={5}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={[[-2000, -2000], [4000, 4000]]}
+        proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
           type: 'awsEdge',
           markerEnd: {
