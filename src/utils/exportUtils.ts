@@ -53,33 +53,24 @@ export const exportAsPNG = async (
       throw new Error('React Flow wrapper not found');
     }
 
-    // Determine background color
-    let backgroundColor: string;
-    if (backgroundType === 'solid') {
-      backgroundColor = theme === 'dark' ? '#1a252f' : '#ffffff';
-    } else {
-      // For canvas mode, keep current background
-      backgroundColor = theme === 'dark' ? '#1a252f' : '#f9fafb';
-    }
-
-    // Export the entire React Flow canvas
-    const dataUrl = await toPng(reactFlowWrapper, {
-      backgroundColor,
+    // Configure export options based on background type
+    const exportOptions: any = {
       cacheBust: true,
       pixelRatio: 2,
       quality: 1,
-      filter: (node) => {
+      filter: (node: any) => {
         if (node instanceof HTMLElement) {
           const classList = node.classList;
 
-          // Always exclude controls, minimap, and attribution
+          // Always exclude controls, minimap, attribution, and the fit-view button
           if (classList.contains('react-flow__controls') ||
               classList.contains('react-flow__minimap') ||
-              classList.contains('react-flow__attribution')) {
+              classList.contains('react-flow__attribution') ||
+              node.tagName === 'BUTTON') {
             return false;
           }
 
-          // For solid background, also exclude the background pattern
+          // For solid background, exclude the background pattern
           if (backgroundType === 'solid' && classList.contains('react-flow__background')) {
             return false;
           }
@@ -88,7 +79,20 @@ export const exportAsPNG = async (
         }
         return true;
       },
-    });
+    };
+
+    // Set background color
+    if (backgroundType === 'solid') {
+      // Pure white for light mode, dark color for dark mode
+      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#ffffff';
+    } else {
+      // Canvas mode: keep the background with dots pattern
+      // Use the same background as the canvas
+      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#f9fafb';
+    }
+
+    // Export the entire React Flow canvas
+    const dataUrl = await toPng(reactFlowWrapper, exportOptions);
 
     const link = document.createElement('a');
     link.download = `${filename}.png`;

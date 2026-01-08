@@ -123,32 +123,57 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
               </button>
             </div>
 
-            {/* Right Side - Demo Video */}
-            <div className={`${theme === 'dark' ? 'bg-[#1a252f]' : 'bg-gray-50'} p-8 md:p-12 flex items-center`}>
-              <div className="w-full">
-                <div className={`rounded-xl overflow-hidden shadow-2xl ${theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'}`}>
-                  <div className="aspect-video flex items-center justify-center border-4 border-dashed border-gray-700/20">
-                    <div className="text-center p-8">
-                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#ff9900]/10 flex items-center justify-center">
-                        <svg className="w-10 h-10 text-[#ff9900]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Watch Demo
-                      </h3>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
-                        See how easy it is to build diagrams
-                      </p>
+            {/* Right Side - Demo Videos */}
+            <div className={`${theme === 'dark' ? 'bg-[#1a252f]' : 'bg-gray-50'} p-8 md:p-12 flex items-center overflow-y-auto max-h-screen`}>
+              <div className="w-full space-y-6">
+                {/* Video 1: Manual Workflow */}
+                <div>
+                  <h3 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Manual Workflow
+                  </h3>
+                  <div className={`rounded-xl overflow-hidden shadow-xl ${theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'}`}>
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <iframe
+                        src="https://player.vimeo.com/video/1152707955?badge=0&autopause=0&player_id=0&app_id=58479&byline=0&portrait=0&title=0"
+                        className="absolute top-0 left-0 w-full h-full"
+                        frameBorder="0"
+                        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        title="Manual Workflow Demo"
+                      />
                     </div>
                   </div>
+                  <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+                    Create diagrams with drag & drop, groups, and connections
+                  </p>
+                </div>
+
+                {/* Video 2: AI & Editing */}
+                <div>
+                  <h3 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    AI-Powered & Editing
+                  </h3>
+                  <div className={`rounded-xl overflow-hidden shadow-xl ${theme === 'dark' ? 'bg-[#232f3e]' : 'bg-white'}`}>
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <iframe
+                        src="https://player.vimeo.com/video/1152707938?badge=0&autopause=0&player_id=0&app_id=58479&byline=0&portrait=0&title=0"
+                        className="absolute top-0 left-0 w-full h-full"
+                        frameBorder="0"
+                        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        title="AI-Powered & Editing Demo"
+                      />
+                    </div>
+                  </div>
+                  <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+                    Import JSON diagrams, edit, and export to multiple formats
+                  </p>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-4 mt-8">
+                <div className="grid grid-cols-3 gap-4 pt-4">
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       500+
                     </div>
                     <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
@@ -156,7 +181,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       Free
                     </div>
                     <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
@@ -164,7 +189,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       ∞
                     </div>
                     <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
