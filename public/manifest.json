@@ -1,0 +1,33 @@
+{
+  "name": "AWS Mesh - ScaleStash",
+  "short_name": "AWS Mesh",
+  "description": "AWS Architecture Diagram Tool - Create professional diagrams with drag-and-drop simplicity",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff9900",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["development", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "AWS Mesh diagram editor"
+    }
+  ]
+}
