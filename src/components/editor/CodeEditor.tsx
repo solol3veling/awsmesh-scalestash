@@ -74,13 +74,13 @@ const CodeEditor: React.FC = () => {
       <div className="absolute bottom-4 left-4 flex gap-2 z-10 max-w-[200px]">
         <button
           onClick={handleApplyChanges}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium shadow-lg transition-colors"
+          className="px-4 py-2 bg-[#ff9900] text-white rounded hover:bg-[#ff8800] text-sm font-medium shadow-lg transition-colors"
         >
           Apply Changes
         </button>
         <button
           onClick={handleDownload}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium shadow-lg transition-colors"
+          className="px-4 py-2 bg-[#ff9900] text-white rounded hover:bg-[#ff8800] text-sm font-medium shadow-lg transition-colors"
         >
           Download JSON
         </button>

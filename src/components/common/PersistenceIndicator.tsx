@@ -22,6 +22,7 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
   const { theme } = useTheme();
   const { undo, redo, canUndo, canRedo } = useDiagram();
   const [showDetails, setShowDetails] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
 
   if (!hasPersistedState) return null;
 
@@ -36,13 +37,24 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
 
   return (
     <div
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-30 rounded-full shadow-lg border transition-all ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-30 rounded-full shadow-lg border transition-all duration-500 ease-out ${
         theme === 'dark'
           ? 'bg-[#232f3e] border-gray-700'
           : 'bg-white border-gray-200'
-      }`}
+      } ${isHovered ? 'px-4 py-2' : 'p-2.5'}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-2 px-4 py-2">
+      {!isHovered ? (
+        /* Collapsed state - just the info icon */
+        <div className="flex items-center justify-center">
+          <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      ) : (
+        /* Expanded state - all controls */
+        <div className="flex items-center gap-2">
         {/* Status Indicator */}
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -142,7 +154,8 @@ const PersistenceIndicator: React.FC<PersistenceIndicatorProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-      </div>
+        </div>
+      )}
 
       {/* Details Panel */}
       {showDetails && (
