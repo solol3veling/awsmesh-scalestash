@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 txt.txt
+
+# Internal planning documents
+MONETIZATION_PLAN.md
+MONETIZATION_PLAN_ONE_TIME.md
+SEO_AUDIT.md
