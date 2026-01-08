@@ -29,6 +29,10 @@ const DiagramPage: React.FC = () => {
     setShowWelcomeModal(false);
   };
 
+  const handleShowWelcome = () => {
+    setShowWelcomeModal(true);
+  };
+
   return (
     <div className="h-screen flex flex-col relative">
       {/* Welcome Modal for First-Time Users */}
@@ -37,6 +41,7 @@ const DiagramPage: React.FC = () => {
       <ServicePalette
         showCodeEditor={showCodeEditor}
         setShowCodeEditor={setShowCodeEditor}
+        onShowWelcome={handleShowWelcome}
       />
 
       <div className="flex-1 flex overflow-hidden">
