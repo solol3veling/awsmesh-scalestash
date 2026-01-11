@@ -22,7 +22,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, nodes, edges
   const handleExportPNG = async (backgroundType: 'canvas' | 'solid') => {
     try {
       setExporting(true);
-      await exportAsPNG('diagram-canvas', filename, backgroundType, theme);
+      await exportAsPNG('diagram-canvas', filename, backgroundType, theme, nodes);
 
       if (window.plausible) {
         window.plausible('Export Diagram', {

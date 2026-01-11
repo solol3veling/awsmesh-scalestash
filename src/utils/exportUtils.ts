@@ -1,4 +1,5 @@
 import type { Node, Edge } from 'reactflow';
+import { getNodesBounds, getViewportForBounds } from 'reactflow';
 import { toPng } from 'html-to-image';
 
 export interface DiagramData {
@@ -39,67 +40,132 @@ export const exportAsPNG = async (
   elementId: string,
   filename: string = 'aws-diagram',
   backgroundType: 'canvas' | 'solid' = 'solid',
-  theme: 'light' | 'dark' = 'light'
+  theme: 'light' | 'dark' = 'light',
+  nodes?: Node[]
 ): Promise<void> => {
   const element = document.getElementById(elementId);
   if (!element) {
+    alert('Error: Canvas element not found. Please try refreshing the page.');
     throw new Error('Canvas element not found');
   }
 
   try {
-    // Get the React Flow wrapper (the main canvas container)
-    const reactFlowWrapper = element.querySelector('.react-flow') as HTMLElement;
-    if (!reactFlowWrapper) {
-      throw new Error('React Flow wrapper not found');
+    // Get the React Flow wrapper and viewport
+    const reactFlow = element.querySelector('.react-flow') as HTMLElement;
+    const viewport = element.querySelector('.react-flow__viewport') as HTMLElement;
+
+    if (!reactFlow || !viewport) {
+      alert('Error: React Flow element not found. Please try refreshing the page.');
+      throw new Error('React Flow element not found');
     }
 
-    // Configure export options based on background type
+    // Get the background element for solid mode
+    const background = reactFlow.querySelector('.react-flow__background') as HTMLElement;
+    const originalBackgroundDisplay = background ? background.style.display : '';
+
+    // Store original transform for restoration
+    const originalTransform = viewport.style.transform;
+
+    // For solid background, temporarily hide the dots background
+    if (backgroundType === 'solid' && background) {
+      background.style.display = 'none';
+    }
+
+    // Auto-fit view if nodes are provided
+    if (nodes && nodes.length > 0) {
+      const bounds = getNodesBounds(nodes);
+      const padding = 0.15; // 15% padding for better framing
+
+      const width = reactFlow.clientWidth;
+      const height = reactFlow.clientHeight;
+
+      // Calculate zoom to fit the bounds
+      const xZoom = width / (bounds.width * (1 + padding));
+      const yZoom = height / (bounds.height * (1 + padding));
+      const zoom = Math.min(xZoom, yZoom, 2); // Max zoom of 2
+
+      // Calculate center position
+      const boundsCenterX = bounds.x + bounds.width / 2;
+      const boundsCenterY = bounds.y + bounds.height / 2;
+
+      const x = width / 2 - boundsCenterX * zoom;
+      const y = height / 2 - boundsCenterY * zoom;
+
+      // Apply the calculated viewport temporarily
+      viewport.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
+
+      // Wait for the transform to apply
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Determine background color
+    // Solid = pure white/dark with NO dots
+    // Canvas = gray/dark with dots visible
+    const backgroundColor = backgroundType === 'solid'
+      ? (theme === 'dark' ? '#1a252f' : '#ffffff')  // Pure solid color
+      : (theme === 'dark' ? '#1a252f' : '#f9fafb'); // Canvas color (will show dots)
+
+    // Configure export options
     const exportOptions: any = {
+      backgroundColor,
       cacheBust: true,
       pixelRatio: 2,
-      quality: 1,
+      quality: 1.0,
+      skipFonts: true,
       filter: (node: any) => {
-        if (node instanceof HTMLElement) {
-          const classList = node.classList;
+        if (!(node instanceof HTMLElement)) {
+          return true;
+        }
 
-          // Always exclude controls, minimap, attribution, and the fit-view button
-          if (classList.contains('react-flow__controls') ||
-              classList.contains('react-flow__minimap') ||
-              classList.contains('react-flow__attribution') ||
-              node.tagName === 'BUTTON') {
+        // Always exclude UI controls
+        if (node.classList) {
+          const classes = Array.from(node.classList);
+
+          const excludeClasses = [
+            'react-flow__controls',
+            'react-flow__minimap',
+            'react-flow__attribution',
+            'react-flow__panel'
+          ];
+
+          if (excludeClasses.some(cls => classes.includes(cls))) {
             return false;
           }
 
           // For solid background, exclude the background pattern
-          if (backgroundType === 'solid' && classList.contains('react-flow__background')) {
+          if (backgroundType === 'solid' && classes.includes('react-flow__background')) {
             return false;
           }
-
-          return true;
         }
+
+        if (node.tagName === 'BUTTON') {
+          return false;
+        }
+
         return true;
       },
     };
 
-    // Set background color
-    if (backgroundType === 'solid') {
-      // Pure white for light mode, dark color for dark mode
-      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#ffffff';
-    } else {
-      // Canvas mode: keep the background with dots pattern
-      // Use the same background as the canvas
-      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#f9fafb';
+    // Export the React Flow canvas
+    const dataUrl = await toPng(reactFlow, exportOptions);
+
+    // Restore original transform and background
+    if (nodes && nodes.length > 0) {
+      viewport.style.transform = originalTransform;
+    }
+    if (background) {
+      background.style.display = originalBackgroundDisplay;
     }
 
-    // Export the entire React Flow canvas
-    const dataUrl = await toPng(reactFlowWrapper, exportOptions);
-
+    // Trigger download
     const link = document.createElement('a');
     link.download = `${filename}.png`;
     link.href = dataUrl;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   } catch (error) {
-    console.error('Error exporting PNG:', error);
+    alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
 };
