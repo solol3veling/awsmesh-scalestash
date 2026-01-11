@@ -41,22 +41,34 @@ export const exportAsPNG = async (
   backgroundType: 'canvas' | 'solid' = 'solid',
   theme: 'light' | 'dark' = 'light'
 ): Promise<void> => {
+  console.log('🎨 Starting PNG export...', { elementId, backgroundType, theme });
+
   const element = document.getElementById(elementId);
   if (!element) {
+    console.error('❌ Canvas element not found:', elementId);
+    alert('Error: Canvas element not found. Please try refreshing the page.');
     throw new Error('Canvas element not found');
   }
+
+  console.log('✅ Found canvas element');
 
   try {
     // Get the React Flow wrapper (contains everything)
     const reactFlow = element.querySelector('.react-flow') as HTMLElement;
     if (!reactFlow) {
+      console.error('❌ React Flow element not found');
+      alert('Error: React Flow element not found. Please try refreshing the page.');
       throw new Error('React Flow element not found');
     }
+
+    console.log('✅ Found React Flow element');
 
     // Determine background color
     const backgroundColor = backgroundType === 'solid'
       ? (theme === 'dark' ? '#1a252f' : '#ffffff')
       : (theme === 'dark' ? '#1a252f' : '#f9fafb');
+
+    console.log('🎨 Background color:', backgroundColor);
 
     // Configure export options
     const exportOptions: any = {
@@ -101,8 +113,12 @@ export const exportAsPNG = async (
       },
     };
 
+    console.log('📸 Converting to PNG...');
+
     // Export the React Flow canvas
     const dataUrl = await toPng(reactFlow, exportOptions);
+
+    console.log('✅ PNG generated, downloading...');
 
     // Trigger download
     const link = document.createElement('a');
@@ -111,8 +127,11 @@ export const exportAsPNG = async (
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    console.log('✅ Export complete!');
   } catch (error) {
-    console.error('Error exporting PNG:', error);
+    console.error('❌ Error exporting PNG:', error);
+    alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
 };
