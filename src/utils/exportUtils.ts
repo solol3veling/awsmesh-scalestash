@@ -47,57 +47,70 @@ export const exportAsPNG = async (
   }
 
   try {
-    // Get the React Flow wrapper (the main canvas container)
-    const reactFlowWrapper = element.querySelector('.react-flow') as HTMLElement;
-    if (!reactFlowWrapper) {
-      throw new Error('React Flow wrapper not found');
+    // Get the React Flow wrapper (contains everything)
+    const reactFlow = element.querySelector('.react-flow') as HTMLElement;
+    if (!reactFlow) {
+      throw new Error('React Flow element not found');
     }
 
-    // Configure export options based on background type
+    // Determine background color
+    const backgroundColor = backgroundType === 'solid'
+      ? (theme === 'dark' ? '#1a252f' : '#ffffff')
+      : (theme === 'dark' ? '#1a252f' : '#f9fafb');
+
+    // Configure export options
     const exportOptions: any = {
+      backgroundColor,
       cacheBust: true,
       pixelRatio: 2,
-      quality: 1,
+      quality: 1.0,
       filter: (node: any) => {
-        if (node instanceof HTMLElement) {
-          const classList = node.classList;
+        // Check if node is an HTML element
+        if (!(node instanceof HTMLElement)) {
+          return true;
+        }
 
-          // Always exclude controls, minimap, attribution, and the fit-view button
-          if (classList.contains('react-flow__controls') ||
-              classList.contains('react-flow__minimap') ||
-              classList.contains('react-flow__attribution') ||
-              node.tagName === 'BUTTON') {
+        // Exclude React Flow UI controls
+        if (node.classList) {
+          const classes = Array.from(node.classList);
+
+          // Always exclude these UI elements
+          const excludeClasses = [
+            'react-flow__controls',
+            'react-flow__minimap',
+            'react-flow__attribution',
+            'react-flow__panel'
+          ];
+
+          if (excludeClasses.some(cls => classes.includes(cls))) {
             return false;
           }
 
           // For solid background, exclude the background pattern
-          if (backgroundType === 'solid' && classList.contains('react-flow__background')) {
+          if (backgroundType === 'solid' && classes.includes('react-flow__background')) {
             return false;
           }
-
-          return true;
         }
+
+        // Exclude any buttons (fit-view button, etc.)
+        if (node.tagName === 'BUTTON') {
+          return false;
+        }
+
         return true;
       },
     };
 
-    // Set background color
-    if (backgroundType === 'solid') {
-      // Pure white for light mode, dark color for dark mode
-      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#ffffff';
-    } else {
-      // Canvas mode: keep the background with dots pattern
-      // Use the same background as the canvas
-      exportOptions.backgroundColor = theme === 'dark' ? '#1a252f' : '#f9fafb';
-    }
+    // Export the React Flow canvas
+    const dataUrl = await toPng(reactFlow, exportOptions);
 
-    // Export the entire React Flow canvas
-    const dataUrl = await toPng(reactFlowWrapper, exportOptions);
-
+    // Trigger download
     const link = document.createElement('a');
     link.download = `${filename}.png`;
     link.href = dataUrl;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   } catch (error) {
     console.error('Error exporting PNG:', error);
     throw error;
