@@ -100,11 +100,14 @@ export const exportAsPNG = async (
     }
 
     // Determine background color
+    // Solid = pure white/dark with NO dots
+    // Canvas = gray/dark with dots visible
     const backgroundColor = backgroundType === 'solid'
-      ? (theme === 'dark' ? '#1a252f' : '#ffffff')
-      : (theme === 'dark' ? '#1a252f' : '#f9fafb');
+      ? (theme === 'dark' ? '#1a252f' : '#ffffff')  // Pure solid color
+      : (theme === 'dark' ? '#1a252f' : '#f9fafb'); // Canvas color (will show dots)
 
-    console.log('🎨 Background:', backgroundType, backgroundColor);
+    console.log('🎨 Background mode:', backgroundType);
+    console.log('🎨 Background color:', backgroundColor);
 
     // Configure export options
     const exportOptions: any = {
@@ -133,10 +136,16 @@ export const exportAsPNG = async (
             return false;
           }
 
-          // IMPORTANT: For solid background, exclude the dots pattern
+          // CRITICAL: For solid background mode, REMOVE the background element completely
+          // This removes the SVG pattern (dots) so you get a pure solid color
           if (backgroundType === 'solid' && classes.includes('react-flow__background')) {
-            console.log('🚫 Filtering out background for solid mode');
-            return false;
+            console.log('🚫 REMOVING dots background for solid mode');
+            return false;  // This removes the entire background element
+          }
+
+          // For canvas mode, keep the background element (shows dots)
+          if (backgroundType === 'canvas' && classes.includes('react-flow__background')) {
+            console.log('✅ KEEPING dots background for canvas mode');
           }
         }
 
