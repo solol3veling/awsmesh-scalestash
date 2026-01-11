@@ -74,22 +74,29 @@ export const exportAsPNG = async (
     if (nodes && nodes.length > 0) {
       console.log('🎯 Calculating bounds for', nodes.length, 'nodes');
       const bounds = getNodesBounds(nodes);
-      const padding = 0.1; // 10% padding
-      const viewportBounds = getViewportForBounds(
-        bounds,
-        reactFlow.clientWidth,
-        reactFlow.clientHeight,
-        0.5, // minZoom
-        2,   // maxZoom
-        padding
-      );
+      const padding = 0.15; // 15% padding for better framing
+
+      const width = reactFlow.clientWidth;
+      const height = reactFlow.clientHeight;
+
+      // Calculate zoom to fit the bounds
+      const xZoom = width / (bounds.width * (1 + padding));
+      const yZoom = height / (bounds.height * (1 + padding));
+      const zoom = Math.min(xZoom, yZoom, 2); // Max zoom of 2
+
+      // Calculate center position
+      const boundsCenterX = bounds.x + bounds.width / 2;
+      const boundsCenterY = bounds.y + bounds.height / 2;
+
+      const x = width / 2 - boundsCenterX * zoom;
+      const y = height / 2 - boundsCenterY * zoom;
 
       // Apply the calculated viewport temporarily
-      viewport.style.transform = `translate(${viewportBounds.x}px, ${viewportBounds.y}px) scale(${viewportBounds.zoom})`;
+      viewport.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
 
       // Wait for the transform to apply
       await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('✅ View fitted to bounds');
+      console.log('✅ View fitted and centered');
     }
 
     // Determine background color
