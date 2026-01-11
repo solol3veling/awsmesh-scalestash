@@ -76,6 +76,7 @@ export const exportAsPNG = async (
       cacheBust: true,
       pixelRatio: 2,
       quality: 1.0,
+      skipFonts: true, // Skip font embedding to avoid Inter font issues
       filter: (node: any) => {
         // Check if node is an HTML element
         if (!(node instanceof HTMLElement)) {
