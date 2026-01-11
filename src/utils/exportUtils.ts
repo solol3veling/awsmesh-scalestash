@@ -1,4 +1,5 @@
 import type { Node, Edge } from 'reactflow';
+import { getNodesBounds, getViewportForBounds } from 'reactflow';
 import { toPng } from 'html-to-image';
 
 export interface DiagramData {
@@ -39,7 +40,8 @@ export const exportAsPNG = async (
   elementId: string,
   filename: string = 'aws-diagram',
   backgroundType: 'canvas' | 'solid' = 'solid',
-  theme: 'light' | 'dark' = 'light'
+  theme: 'light' | 'dark' = 'light',
+  nodes?: Node[]
 ): Promise<void> => {
   console.log('🎨 Starting PNG export...', { elementId, backgroundType, theme });
 
@@ -53,22 +55,49 @@ export const exportAsPNG = async (
   console.log('✅ Found canvas element');
 
   try {
-    // Get the React Flow wrapper (contains everything)
+    // Get the React Flow wrapper and viewport
     const reactFlow = element.querySelector('.react-flow') as HTMLElement;
-    if (!reactFlow) {
-      console.error('❌ React Flow element not found');
+    const viewport = element.querySelector('.react-flow__viewport') as HTMLElement;
+
+    if (!reactFlow || !viewport) {
+      console.error('❌ React Flow elements not found');
       alert('Error: React Flow element not found. Please try refreshing the page.');
       throw new Error('React Flow element not found');
     }
 
-    console.log('✅ Found React Flow element');
+    console.log('✅ Found React Flow elements');
+
+    // Store original transform for restoration
+    const originalTransform = viewport.style.transform;
+
+    // Auto-fit view if nodes are provided
+    if (nodes && nodes.length > 0) {
+      console.log('🎯 Calculating bounds for', nodes.length, 'nodes');
+      const bounds = getNodesBounds(nodes);
+      const padding = 0.1; // 10% padding
+      const viewportBounds = getViewportForBounds(
+        bounds,
+        reactFlow.clientWidth,
+        reactFlow.clientHeight,
+        0.5, // minZoom
+        2,   // maxZoom
+        padding
+      );
+
+      // Apply the calculated viewport temporarily
+      viewport.style.transform = `translate(${viewportBounds.x}px, ${viewportBounds.y}px) scale(${viewportBounds.zoom})`;
+
+      // Wait for the transform to apply
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('✅ View fitted to bounds');
+    }
 
     // Determine background color
     const backgroundColor = backgroundType === 'solid'
       ? (theme === 'dark' ? '#1a252f' : '#ffffff')
       : (theme === 'dark' ? '#1a252f' : '#f9fafb');
 
-    console.log('🎨 Background color:', backgroundColor);
+    console.log('🎨 Background:', backgroundType, backgroundColor);
 
     // Configure export options
     const exportOptions: any = {
@@ -76,18 +105,16 @@ export const exportAsPNG = async (
       cacheBust: true,
       pixelRatio: 2,
       quality: 1.0,
-      skipFonts: true, // Skip font embedding to avoid Inter font issues
+      skipFonts: true,
       filter: (node: any) => {
-        // Check if node is an HTML element
         if (!(node instanceof HTMLElement)) {
           return true;
         }
 
-        // Exclude React Flow UI controls
+        // Always exclude UI controls
         if (node.classList) {
           const classes = Array.from(node.classList);
 
-          // Always exclude these UI elements
           const excludeClasses = [
             'react-flow__controls',
             'react-flow__minimap',
@@ -99,13 +126,13 @@ export const exportAsPNG = async (
             return false;
           }
 
-          // For solid background, exclude the background pattern
+          // IMPORTANT: For solid background, exclude the dots pattern
           if (backgroundType === 'solid' && classes.includes('react-flow__background')) {
+            console.log('🚫 Filtering out background for solid mode');
             return false;
           }
         }
 
-        // Exclude any buttons (fit-view button, etc.)
         if (node.tagName === 'BUTTON') {
           return false;
         }
@@ -118,6 +145,12 @@ export const exportAsPNG = async (
 
     // Export the React Flow canvas
     const dataUrl = await toPng(reactFlow, exportOptions);
+
+    // Restore original transform
+    if (nodes && nodes.length > 0) {
+      viewport.style.transform = originalTransform;
+      console.log('✅ View restored');
+    }
 
     console.log('✅ PNG generated, downloading...');
 
