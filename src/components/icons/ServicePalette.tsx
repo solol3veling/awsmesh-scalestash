@@ -232,10 +232,10 @@ const ServicePalette: React.FC<ServicePaletteProps> = ({ showCodeEditor, setShow
       {/* AWS Logo - top left */}
       <button
         onClick={onShowWelcome}
-        className="fixed top-6 left-6 z-20 w-12 h-12 bg-[#ff9900] hover:bg-[#ff8800] rounded-lg flex items-center justify-center shadow-lg transition-all hover:shadow-xl cursor-pointer"
+        className="fixed top-6 left-6 z-20 w-10 h-10 bg-[#ff9900] hover:bg-[#ff8800] rounded-lg flex items-center justify-center shadow-lg transition-all hover:shadow-xl cursor-pointer"
         title="Show Welcome Screen"
       >
-        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
         </svg>
       </button>

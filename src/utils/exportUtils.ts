@@ -43,16 +43,11 @@ export const exportAsPNG = async (
   theme: 'light' | 'dark' = 'light',
   nodes?: Node[]
 ): Promise<void> => {
-  console.log('🎨 Starting PNG export...', { elementId, backgroundType, theme });
-
   const element = document.getElementById(elementId);
   if (!element) {
-    console.error('❌ Canvas element not found:', elementId);
     alert('Error: Canvas element not found. Please try refreshing the page.');
     throw new Error('Canvas element not found');
   }
-
-  console.log('✅ Found canvas element');
 
   try {
     // Get the React Flow wrapper and viewport
@@ -60,19 +55,24 @@ export const exportAsPNG = async (
     const viewport = element.querySelector('.react-flow__viewport') as HTMLElement;
 
     if (!reactFlow || !viewport) {
-      console.error('❌ React Flow elements not found');
       alert('Error: React Flow element not found. Please try refreshing the page.');
       throw new Error('React Flow element not found');
     }
 
-    console.log('✅ Found React Flow elements');
+    // Get the background element for solid mode
+    const background = reactFlow.querySelector('.react-flow__background') as HTMLElement;
+    const originalBackgroundDisplay = background ? background.style.display : '';
 
     // Store original transform for restoration
     const originalTransform = viewport.style.transform;
 
+    // For solid background, temporarily hide the dots background
+    if (backgroundType === 'solid' && background) {
+      background.style.display = 'none';
+    }
+
     // Auto-fit view if nodes are provided
     if (nodes && nodes.length > 0) {
-      console.log('🎯 Calculating bounds for', nodes.length, 'nodes');
       const bounds = getNodesBounds(nodes);
       const padding = 0.15; // 15% padding for better framing
 
@@ -96,7 +96,6 @@ export const exportAsPNG = async (
 
       // Wait for the transform to apply
       await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('✅ View fitted and centered');
     }
 
     // Determine background color
@@ -105,9 +104,6 @@ export const exportAsPNG = async (
     const backgroundColor = backgroundType === 'solid'
       ? (theme === 'dark' ? '#1a252f' : '#ffffff')  // Pure solid color
       : (theme === 'dark' ? '#1a252f' : '#f9fafb'); // Canvas color (will show dots)
-
-    console.log('🎨 Background mode:', backgroundType);
-    console.log('🎨 Background color:', backgroundColor);
 
     // Configure export options
     const exportOptions: any = {
@@ -136,16 +132,9 @@ export const exportAsPNG = async (
             return false;
           }
 
-          // CRITICAL: For solid background mode, REMOVE the background element completely
-          // This removes the SVG pattern (dots) so you get a pure solid color
+          // For solid background, exclude the background pattern
           if (backgroundType === 'solid' && classes.includes('react-flow__background')) {
-            console.log('🚫 REMOVING dots background for solid mode');
-            return false;  // This removes the entire background element
-          }
-
-          // For canvas mode, keep the background element (shows dots)
-          if (backgroundType === 'canvas' && classes.includes('react-flow__background')) {
-            console.log('✅ KEEPING dots background for canvas mode');
+            return false;
           }
         }
 
@@ -157,18 +146,16 @@ export const exportAsPNG = async (
       },
     };
 
-    console.log('📸 Converting to PNG...');
-
     // Export the React Flow canvas
     const dataUrl = await toPng(reactFlow, exportOptions);
 
-    // Restore original transform
+    // Restore original transform and background
     if (nodes && nodes.length > 0) {
       viewport.style.transform = originalTransform;
-      console.log('✅ View restored');
     }
-
-    console.log('✅ PNG generated, downloading...');
+    if (background) {
+      background.style.display = originalBackgroundDisplay;
+    }
 
     // Trigger download
     const link = document.createElement('a');
@@ -177,10 +164,7 @@ export const exportAsPNG = async (
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    console.log('✅ Export complete!');
   } catch (error) {
-    console.error('❌ Error exporting PNG:', error);
     alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
